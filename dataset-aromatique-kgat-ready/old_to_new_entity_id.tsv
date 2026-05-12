@@ -1,0 +1,999 @@
+old_id	new_id	entity_type	entity_name
+0	0	product	Berrylicious
+1	340	note	Amber
+2	341	note	Cacao
+3	342	family	AMBER
+4	343	accord	warm spicy
+5	344	accord	amber
+6	345	accord	cacao
+7	346	accord	aromatic
+8	347	accord	woody
+9	348	global_ref	Bad Boy Extreme By Carolina Herrera
+10	349	global_accord	amber
+11	350	global_accord	warm spicy
+12	351	global_accord	cacao
+13	352	global_accord	aromatic
+14	353	global_accord	woody
+15	354	global_accord	sweet
+16	355	global_accord	balsamic
+17	356	global_accord	patchouli
+18	357	global_accord	earthy
+19	358	global_accord	smoky
+20	359	global_family	oriental
+21	1	product	Verve Vale
+22	360	note	Ginger
+23	361	accord	citrus
+24	362	accord	fresh spicy
+25	363	accord	aquatic
+26	364	global_ref	LV L'Immensite
+27	365	global_accord	fresh spicy
+28	366	global_accord	citrus
+29	367	global_accord	herbal
+30	368	global_accord	fresh
+31	369	global_accord	aquatic
+32	370	global_accord	musky
+33	371	global_family	oriental spicy
+34	2	product	Secret of Bandit
+35	372	note	Incense
+36	373	accord	smoky
+37	374	accord	leather
+38	375	accord	musky
+39	376	accord	balsamic
+40	377	global_ref	Penhaligon's Terrible Teddy
+41	378	global_accord	leather
+42	379	global_accord	animalic
+43	380	global_family	leather
+44	3	product	Spicy Day
+45	381	note	Marigold
+46	382	accord	powdery
+47	383	global_ref	Gold Incense by Carolina herera confidential collection
+48	384	global_accord	powdery
+49	385	global_accord	vanilla
+50	386	global_accord	cinnamon
+51	4	product	Fancy Dress
+52	387	note	Neroli
+53	388	accord	iris
+54	389	global_ref	Elie Saab Elixir for woman
+55	390	global_accord	iris
+56	391	global_accord	violet
+57	392	global_family	oriental floral
+58	5	product	Moz Art
+59	393	note	Pepper
+60	394	accord	caramel
+61	395	accord	sweet
+62	396	accord	vanilla
+63	397	global_ref	JPG Scandal Pour Home
+64	398	global_accord	caramel
+65	399	global_accord	soft spicy
+66	400	global_family	oriental woody
+67	6	product	Superclass Woman
+68	401	note	Rasberry
+69	402	accord	white floral
+70	403	accord	honey
+71	404	accord	fruity
+72	405	global_ref	paco rabbane million woman
+73	406	global_accord	white floral
+74	407	global_accord	honey
+75	408	global_accord	fruity
+76	409	global_accord	floral
+77	410	global_family	floral fruity
+78	7	product	Black Lax
+79	411	note	Rosewood
+80	412	accord	lavender
+81	413	global_ref	Alexandria II by xerjoff
+82	414	global_accord	oud
+83	415	global_accord	lavender
+84	416	global_accord	rose
+85	8	product	Red Glass
+86	417	note	Saffron
+87	418	accord	metalic
+88	419	global_ref	Bacarat Intense
+89	420	global_accord	almond
+90	421	global_accord	nutty
+91	422	global_accord	metallic
+92	9	product	Classic Vintage
+93	423	note	Tonka bean
+94	424	accord	floral
+95	425	accord	fresh
+96	426	global_ref	Gold immortals by ex nihilo
+97	427	global_accord	yellow floral
+98	10	product	Aquazone
+99	428	note	Aquatic
+100	429	note	Bergamot
+101	430	family	AQUATIC
+102	431	accord	marine
+103	432	global_ref	Jorge di Profondo Maison Alhambra
+104	433	global_accord	marine
+105	434	global_accord	mineral
+106	435	global_family	aromatic aquatic
+107	11	product	Solstice
+108	436	note	Blood orange
+109	437	accord	green
+110	438	accord	ozonic
+111	439	global_ref	Boss Bottled United by Hugo Boss
+112	440	global_accord	green
+113	441	global_accord	ozonic
+114	442	global_family	woody aromatic
+115	12	product	Our First Love
+116	443	note	Cedar
+117	444	global_ref	Hugo boss Xy men
+118	13	product	Pentavenue
+119	445	note	Corriander
+120	446	accord	aldehydic
+121	447	accord	vodka
+122	448	global_ref	Vodka on the Rocks By Kilian
+123	449	global_accord	aldehydic
+124	450	global_accord	vodka
+125	451	global_accord	mossy
+126	14	product	Black Ball
+127	452	note	Grapefruit
+128	453	global_ref	Lacoste essential sport
+129	15	product	Patchouli Petals
+130	454	note	Iris
+131	455	global_ref	Ele
+132	456	global_family	floral woody musk
+133	16	product	Bosi Bottle
+134	457	note	Lavender
+135	458	accord	violet
+136	459	global_ref	Hugo Boss Bottle Night
+137	17	product	Fuck Boy
+138	460	note	Mandarin Orange
+139	461	global_ref	Dunhill Blie
+140	462	global_accord	tropical
+141	463	global_accord	salty
+142	18	product	Colate Sport
+143	464	note	Orange
+144	465	accord	aldehydes
+145	466	global_ref	Channel Allure Homme Sport
+146	467	global_family	woody spicy
+147	19	product	Vandora
+148	468	note	Pear
+149	469	accord	yellow floral
+150	470	global_ref	Cœur Battant Louis Vuitton
+151	471	global_family	chypre floral
+152	20	product	Cloud Grande
+153	472	accord	oud
+154	473	global_ref	Tomford Oud Wood
+155	21	product	Whisper of Passion
+156	474	note	Sea Notes
+157	475	accord	salty
+158	476	global_ref	Tomford Oud Minnerale
+159	477	global_family	woody aquatic
+160	22	product	SCENT SQUAD
+161	478	note	Aromatic
+162	479	note	Cardamom
+163	480	family	AROMATIC
+164	481	accord	rum
+165	482	accord	animalic
+166	483	global_ref	Bvlgari Man Black Orient Bvlgari
+167	484	global_accord	rum
+168	485	global_accord	tuberose
+169	23	product	SAFETY FIRST
+170	486	note	Green
+171	487	global_ref	Freedom Tommy Hilfiger
+172	24	product	Reef 33 Perfumes
+173	488	note	Indian Saffron
+174	25	product	CHARMING DECIVER
+175	489	global_ref	Eau de Lacoste L.12.12. Green Lacoste Fragrances
+176	490	global_family	citrus aromatic
+177	26	product	Golden Secret
+178	491	note	Pink Pepper
+179	492	accord	patchouli
+180	493	global_ref	Noir by Tom Ford
+181	27	product	Oran Cle
+182	494	note	Citrus
+183	495	note	African Orange Flower
+184	496	family	CITRUS
+185	497	global_ref	Hugo Boss Orange
+186	28	product	Authentic Discovery
+187	498	note	Amalfi Lemon
+188	499	global_ref	Aqua Universalis Maison Francis Kurkdjian
+189	500	global_family	aromatic
+190	29	product	Turathi Blue Afnan
+191	30	product	Spring Breeze
+192	501	note	Ambergriss
+193	502	global_ref	Crystal Love For Him Attar Collection
+194	31	product	Bright Cloud
+195	503	note	Bamboo
+196	504	accord	woody fresh
+197	505	accord	fruity aromatic
+198	506	global_ref	D&G Light Blue Woman
+199	32	product	Barbie
+200	507	accord	sweet fresh
+201	508	accord	citrus floral
+202	509	global_ref	Anna Sui Dolly Girl
+203	33	product	Jack Sparrow
+204	510	note	Beri Juniper
+205	511	global_ref	Jaguar Blue Jack
+206	34	product	Will You
+207	512	note	Bitter Orange
+208	513	accord	citrus white floral
+209	514	accord	fruity fresh
+210	515	global_ref	Lavin Marry Me
+211	35	product	Will Deep
+212	516	note	Blackcurrant
+213	517	global_ref	Deep Red Hugo Boss
+214	518	global_family	oriental vanilla
+215	36	product	Maxima Gold
+216	519	global_ref	Montblanc Legend
+217	520	global_family	aromatic fougere
+218	37	product	deep water
+219	521	note	Citron
+220	522	accord	earthy
+221	523	global_ref	Cyprès Pantelleria Giorgio Armani
+222	524	global_family	chypre
+223	38	product	Rainforest
+224	525	global_ref	Invictus Rabanne
+225	39	product	Blue Crocodile
+226	526	note	Green Apple
+227	527	global_ref	lacoste cool play
+228	528	global_family	woody floral musk
+229	40	product	Treasure to Love
+230	529	note	Italian Lemon
+231	530	global_ref	D&G Italian
+232	41	product	Dreamland
+233	531	accord	haert: white floral warm spicy
+234	532	global_ref	YSL Libre
+235	533	global_family	oriental fougere
+236	42	product	Spell Out
+237	534	note	Mint
+238	535	global_ref	Tommy Man
+239	43	product	Stardust
+240	536	global_ref	Cuba Brazil Cuba Paris
+241	44	product	Kenzoba
+242	537	note	Orchid
+243	538	accord	tropical
+244	539	global_ref	Kenzo Bali
+245	45	product	Autumn
+246	540	note	Patchouli
+247	46	product	The Scent Diva
+248	541	note	Peony
+249	542	global_ref	Joy of Pink Lacoste Fragrances
+250	47	product	Bad Boy
+251	543	note	Petitgrain
+252	544	global_ref	Bvlgari Extreme Bvlgari
+253	48	product	Vicaro
+254	545	note	Pineapple
+255	546	accord	sweet woody
+256	547	accord	oriental
+257	548	global_ref	Jaguar Vision
+258	49	product	Dusk musk
+259	549	note	Raspberry
+260	550	accord	musky rose
+261	551	global_ref	Roja Exilir Pour Femme
+262	50	product	aqua fresh woman
+263	552	note	Water Jasmine
+264	553	global_ref	Aqua digio woman
+265	51	product	Harry Up
+266	554	note	Yuzu
+267	555	global_ref	Bvlgari Aquatush
+268	52	product	Last Season
+269	556	note	Floral
+270	557	note	Aldehydes
+271	558	family	FLORAL
+272	559	accord	powderry
+273	560	global_ref	Tomford Rose Metallique for woman
+274	53	product	Glamorious
+275	561	accord	rose
+276	562	global_ref	Lancome Idhole N
+277	54	product	Cover Girl
+278	563	global_ref	CH GG Blus
+279	55	product	Lavish Lily
+280	564	note	Cherry
+281	565	accord	cherry
+282	566	global_ref	Nude Bouquet By Zara
+283	567	global_family	floral
+284	56	product	Lovin Him
+285	568	note	Freesia
+286	569	global_ref	estee lauder pleasures
+287	57	product	Shout Man
+288	570	global_ref	Chance Eau Tendre Chanel
+289	58	product	Blatherskite
+290	571	note	Kiwi
+291	59	product	My Crush
+292	572	note	Lily
+293	573	global_ref	Gucci rush 2
+294	60	product	Five Years
+295	574	note	Lime
+296	575	global_ref	Elizabeth Arden 5th avenue
+297	61	product	D Nova
+298	576	note	Litchi
+299	577	accord	wam spicy
+300	578	global_ref	Z White
+301	579	global_family	floral / women’s fragrance
+302	62	product	How Deep
+303	580	note	Magnolia
+304	581	global_ref	Lancome Miracle Woman
+305	63	product	Sombrero
+306	582	global_ref	Guess summer yellow
+307	64	product	Woman In Love Never Cross
+308	583	global_ref	Guess Pink
+309	65	product	Breezy Bouquet
+310	584	note	Peach
+311	66	product	Bosa Nova
+312	585	global_ref	Jo Malone English Pear
+313	586	global_family	chypre fruity
+314	67	product	Victory
+315	587	global_ref	Gucci Floral
+316	68	product	White Sense
+317	588	note	Violet
+318	589	global_ref	Ginza M Shiseido
+319	69	product	Woman In Red
+320	590	note	White Musk
+321	591	global_ref	Kenzo Flower
+322	70	product	FOF
+323	592	global_ref	Anna Sui Flight of Funcy
+324	71	product	Darkness
+325	593	note	Fresh Spicy
+326	594	note	Agarwood
+327	595	family	FRESH SPICY
+328	596	accord	oriental: vanilla
+329	72	product	Bamboo Cici
+330	597	note	Aldehyde
+331	598	global_ref	Y Eau de Parfum Yves Saint Laurent
+332	73	product	Rouge Velaurs
+333	599	note	Apple
+334	74	product	Add 5
+335	600	note	Basil
+336	75	product	Tacenda
+337	76	product	Rayon
+338	601	note	Black Cardamom
+339	77	product	Dark Ages
+340	602	global_ref	Mr burberry burberry
+341	78	product	Foreo Ice
+342	603	note	Coriander
+343	604	global_ref	Individuel By Montblanc
+344	79	product	Silk Blossom
+345	605	note	Galbanum
+346	606	accord	cinnamon
+347	607	global_ref	Playboy london
+348	608	global_accord	anis
+349	609	global_family	aromatic spicy
+350	80	product	Dory
+351	610	note	Jasmine
+352	81	product	King of Parties
+353	611	note	Kumquat
+354	612	accord	soft spicy
+355	82	product	Black Bond
+356	83	product	cinnabar
+357	613	note	Lemon
+358	614	accord	almond
+359	615	accord	vanila
+360	616	global_ref	Mancera oud lemon mmint
+361	84	product	Deep Crush
+362	617	note	Lemon Leaf
+363	85	product	Zero Two
+364	618	global_ref	212 VIP Men By Carolina Herrera
+365	86	product	Erost
+366	87	product	Momento
+367	88	product	Usain Bolt
+368	619	note	Nutmeg
+369	89	product	Big Boss
+370	620	note	Orange Blossom
+371	90	product	Vagabond
+372	621	global_ref	Sauvage by Dior
+373	91	product	Only You
+374	92	product	Jeep Shine
+375	622	note	Red Apple
+376	623	global_ref	Ferrari Black By Ferrari
+377	93	product	Spice Up
+378	624	note	Red Pepper
+379	94	product	Advens
+380	625	note	Rosemary
+381	95	product	Mellifluous
+382	626	accord	metallic
+383	627	global_ref	Zara Mag
+384	628	global_accord	tobacco
+385	96	product	Just A Boy
+386	97	product	Great Police
+387	629	note	Fruity
+388	630	family	FRUITY
+389	98	product	Calestial Citrus
+390	631	note	Apricot
+391	632	accord	chocolate
+392	99	product	Tow Combination
+393	633	global_ref	Louis vuitton le jour se leve
+394	100	product	Vintage Vision
+395	634	note	Black Currant
+396	101	product	Blue Hills
+397	635	accord	warm
+398	102	product	Forfive
+399	636	note	Bubblegum
+400	103	product	Far From Home
+401	637	note	Chamomile
+402	638	accord	herbal
+403	104	product	Princess Charming
+404	639	accord	nuity
+405	105	product	Haruke
+406	640	note	Cherry Blossom
+407	106	product	D sava
+408	641	note	Cinnamon
+409	642	accord	fruity musky
+410	643	accord	vanilla tropical
+411	644	global_ref	Zara Black Amber
+412	107	product	Ocean Lounge
+413	645	note	Coconut
+414	646	accord	coconut
+415	647	accord	rose sweet
+416	108	product	Queen Star
+417	648	note	Cranberry
+418	109	product	Perfect Girl
+419	110	product	Axapollo
+420	111	product	Hey Ma
+421	112	product	Zimba
+422	649	global_ref	burberry woman
+423	113	product	Moon AA
+424	650	accord	greeen
+425	114	product	Blanc Space
+426	115	product	Black Floral
+427	651	note	Lotus
+428	116	product	Temperature
+429	117	product	Bewitching
+430	652	note	May Rose
+431	118	product	Plat Low
+432	653	note	Melon
+433	119	product	Aegen Si
+434	654	note	Musk
+435	120	product	Be Feminim
+436	655	note	Passionfruit
+437	656	accord	ozonoc
+438	121	product	Popular
+439	657	global_ref	Victoria Secret Romance
+440	122	product	Jellyfish
+441	123	product	Alinenor
+442	124	product	My Angel
+443	125	product	Chosen
+444	658	note	Pistachio
+445	126	product	Yamato One
+446	659	note	Plum
+447	127	product	eramusk
+448	660	note	Powdery
+449	661	global_ref	Kirke tizinia terenzia
+450	128	product	Ood Super
+451	129	product	Dor Favor
+452	130	product	Eifel
+453	662	note	Red Berries
+454	131	product	Champion Man
+455	663	note	Rose
+456	664	global_ref	Chanel no 1
+457	132	product	Silky Pink
+458	665	global_ref	Bacarat silk mood
+459	666	global_family	oud / woody floral
+460	133	product	Fit Woman
+461	667	note	Sicilian Bergamot
+462	668	global_ref	B. United Woman Benetton
+463	134	product	Twilight
+464	669	note	Sour Chery
+465	135	product	Strong Girl
+466	670	note	Sugar Cane
+467	136	product	Tunefull
+468	671	note	Vanilla
+469	137	product	XO Nine
+470	138	product	Gotcha
+471	672	note	Watermelon
+472	139	product	Arouse
+473	673	note	Whipped Cream
+474	140	product	Eternal Sunset
+475	674	family	GREEN
+476	675	global_ref	Nautica Voyage Nautica
+477	141	product	In The Groove
+478	676	global_ref	Jaguar green colour
+479	142	product	Omniscient
+480	677	note	Betel Leaf
+481	678	global_ref	Nishane ege egaile
+482	679	global_family	aromatic green / fresh aromatic
+483	143	product	Ford Leather
+484	144	product	Boomtown
+485	680	note	Cannabis
+486	681	accord	cannabis
+487	682	global_ref	CH bad boy le
+488	683	global_accord	cannabis
+489	145	product	London Love
+490	146	product	Be Del Woman
+491	684	note	Cucumber
+492	685	global_ref	DKNY Delicious woman
+493	686	global_accord	spicy
+494	147	product	Road Spice
+495	687	note	Fig Leaf
+496	688	global_ref	Philosykos Eau de Toilette Diptyque
+497	689	global_accord	lactonic
+498	690	global_family	aromatic green
+499	148	product	Artemis
+500	691	note	Grass
+501	692	accord	pzonic
+502	693	global_ref	Cread iris tweed
+503	694	global_accord	aquaticp
+504	149	product	Dark Green
+505	695	global_ref	Drakar Noir
+506	150	product	Forest
+507	696	global_ref	bulgari omnia green jade
+508	697	global_family	floral aquatic
+509	151	product	Mighty
+510	698	note	Matcha Tea
+511	699	global_ref	The Matcha 26 Le Labo
+512	700	global_family	woody / green tea
+513	152	product	Fresh Matcha
+514	701	global_ref	Green Tea Elizabeth Arden for women
+515	153	product	Gracias Garden
+516	702	global_ref	Hermes for man
+517	154	product	Haystack
+518	703	note	Straw
+519	704	global_ref	Azzaro Wanted Eau de Parfum for men
+520	155	product	Man in Green
+521	705	note	Tobbaco
+522	706	accord	tobacco
+523	707	global_ref	Ralph Lauren Polo Green
+524	708	global_accord	conifer
+525	709	global_family	chypre / woody chypre
+526	156	product	Passion Art
+527	710	global_ref	Guerlain insolence
+528	157	product	Floral Noir
+529	711	note	Leather
+530	712	family	LEATHER
+531	713	global_ref	Louis Vuitton Dans La Peau For Woman
+532	158	product	lost in space
+533	714	note	Black Tea
+534	715	global_ref	Eau Parfumee au The Noir By Bvlgari
+535	159	product	Black Ford
+536	716	global_ref	Tomford Ombre Leather
+537	160	product	Sweaty Man
+538	717	note	Green Tea
+539	718	global_ref	Bulgari Black
+540	161	product	Secret Code
+541	719	note	Juniper Berries
+542	720	global_ref	Black Saffron By Byredo
+543	162	product	Majesty
+544	721	note	Labdanum
+545	163	product	Fast and Furious
+546	722	global_ref	Lacoste Pour Feme legere
+547	164	product	Fiori Leys
+548	723	accord	mossy
+549	724	global_ref	Mancera Wild Leeather
+550	165	product	silk safron
+551	166	product	Longlive
+552	725	note	Musk Powdery
+553	726	family	MUSK POWDERY
+554	727	accord	freesh
+555	167	product	Milord
+556	168	product	Classy Bless
+557	728	note	Black Pepper
+558	729	global_ref	Givenchy Gentleman EDP
+559	169	product	Felice
+560	730	note	Fresh
+561	170	product	CR 7
+562	731	global_ref	Cristiano Ronaldo
+563	171	product	Blue Black
+564	732	global_ref	Body Shop White Musk
+565	172	product	Liquid
+566	173	product	Aqua Legend
+567	174	product	Badge
+568	733	global_ref	Carolin Herrera Insignia
+569	175	product	MIB
+570	176	product	Jeep White
+571	177	product	Head Turner
+572	734	note	Ylang Ylang
+573	178	product	Heritage
+574	735	note	Oud
+575	736	family	OUD
+576	179	product	Ombredesire
+577	737	note	Amberwood
+578	738	global_ref	LV Monde
+579	180	product	Oudhi
+580	739	global_ref	Tomford Oud W
+581	181	product	Oud Man
+582	182	product	Sandal an Oud
+583	183	product	Monarca
+584	740	accord	aromatique
+585	741	global_ref	Jomalone oud
+586	742	global_family	woody / cologne intense
+587	184	product	Forest Night
+588	743	global_ref	Type timur tengah
+589	185	product	Beatrize
+590	186	product	Oud Noir
+591	744	global_ref	Devine oud by roberto cavali
+592	187	product	Musk Oud
+593	745	note	Rum
+594	746	global_ref	musk oud
+595	188	product	Vetiver Intense
+596	189	product	Blue Shine
+597	747	note	Sandalwood
+598	190	product	Malika
+599	748	note	Tobacco
+600	191	product	Bidden Rose
+601	749	global_ref	Aoud & vanilla by mancera
+602	192	product	Qardashi
+603	750	note	Wild Rose
+604	193	product	Groovy Glam
+605	751	note	Red Floral
+606	752	family	RED FLORAL
+607	753	global_ref	LV roses sables
+608	754	global_family	amber floral / oud
+609	194	product	Devine
+610	755	global_ref	Zara Hipster Oud
+611	195	product	Pixie Petals
+612	756	global_ref	Paco Olympea Floral
+613	196	product	Rosella
+614	757	note	Bulgarian Rose
+615	758	global_ref	Bulgari Rose Woman
+616	197	product	Ebbio
+617	759	note	Coffe
+618	760	accord	coffe
+619	761	global_ref	Montale Intens coffee
+620	762	global_accord	coffee
+621	763	global_family	amber vanilla / gourmand floral
+622	198	product	Scent Vintage
+623	764	note	Damask Rose
+624	765	global_ref	Miss Dior Blooming Bouquet
+625	199	product	White Luxury
+626	766	accord	fuity
+627	767	global_ref	Versace Dylan Purple
+628	200	product	Bright Sunshine
+629	768	note	Geranium
+630	769	global_ref	Miss Dior Rose n Roses
+631	201	product	Truly
+632	770	note	Honey
+633	771	global_ref	Montale rose musk
+634	202	product	Ruby Red
+635	772	global_ref	Tomford Noir
+636	773	global_family	oriental woody / amber woody
+637	203	product	Full Of Passion
+638	774	global_ref	Chloe Roses De Chloe Chloé
+639	204	product	Charmile
+640	775	note	Mossy
+641	776	global_ref	Byredo Rose Noir
+642	777	global_family	chypre floral / rose
+643	205	product	Marveiles
+644	778	note	Myrtle
+645	779	global_ref	Hermes Rouge
+646	206	product	Green Steam
+647	780	global_ref	Louis Vuitton Rose des Vent
+648	207	product	Valesca
+649	781	note	Pomegranate
+650	782	global_ref	CK Euphoria Blossom
+651	783	global_family	oriental floral / amber floral
+652	208	product	Rose of The Vent
+653	784	note	Safron
+654	209	product	Seven San
+655	785	note	Sugar
+656	786	global_ref	Moncera roses vanila
+657	787	global_family	oriental vanilla / amber vanilla
+658	210	product	Celindion Sensation
+659	788	global_ref	LV spell on you
+660	211	product	Gempita
+661	789	note	Sweet
+662	790	family	SWEET
+663	791	global_ref	Bacarat aqua universal
+664	212	product	Waka-Waka
+665	792	note	Benzoin
+666	793	accord	woody white floral
+667	794	global_ref	Shakira Women
+668	213	product	Mirage Moon
+669	795	note	Bitter Almond
+670	796	global_ref	Bacarat Xtraid Red
+671	214	product	Candy Night
+672	797	global_ref	pradha candy
+673	215	product	Glitter Glam
+674	798	global_ref	Chacharel Amor Amor
+675	216	product	given sea
+676	799	accord	sweet floral
+677	800	global_ref	Anna Sui Fantasia Mermaid
+678	801	global_family	floral fruity gourmand
+679	217	product	Callisto
+680	802	note	Carrot Seeds
+681	803	global_ref	Aura Loewe Floral
+682	218	product	Goo Squid
+683	804	note	Cassis
+684	805	global_ref	Gio Armani Si
+685	219	product	Cartir
+686	806	accord	sweet vanilla
+687	807	accord	amber powdery
+688	808	global_ref	DKNY Delicious Cartier
+689	220	product	Guci Gold
+690	809	accord	fruity  vanilla rose
+691	810	global_ref	Ariana Grande Thank You
+692	811	global_accord	coconut
+693	221	product	Sis Leys
+694	222	product	Ice Americano
+695	812	note	Coffe Sugar
+696	813	global_ref	Odetu Black Coffee
+697	223	product	Axcoffe
+698	814	note	Dark Chocolate
+699	815	accord	warm spicy chocolate
+700	816	accord	vanilla cacao
+701	817	global_ref	Axe Coklat
+702	818	global_accord	chocolate
+703	819	global_accord	cherry
+704	224	product	Black Cocain
+705	820	note	Fig
+706	821	accord	coffee
+707	822	global_ref	Ysl Black Opium Illicit Green
+708	225	product	Collector's Edition
+709	823	accord	vanilla woody
+710	824	accord	powdery sweet
+711	825	global_ref	Zara Oriental Fruity
+712	226	product	Rose of The Sea
+713	826	global_ref	Instant crush by mancera
+714	227	product	Sweet Sunshine
+715	827	note	Pink Peony
+716	828	global_ref	Salvator Ferragamo Inchanto Shine
+717	228	product	Queen Flowers
+718	829	global_ref	Avril Lavigne Wild Rose
+719	229	product	Born to Shine
+720	830	note	Popcorn
+721	831	accord	lactonic
+722	832	global_ref	Popcorn
+723	230	product	Calypso
+724	833	accord	fruity iris
+725	834	accord	vanilla powdery
+726	835	global_ref	Tease Candy Noir Victoria's Secret for women
+727	231	product	Particless
+728	836	accord	aroomatic
+729	837	global_ref	Escada magnetism woman
+730	232	product	Samericek
+731	838	note	Red currant
+732	839	global_ref	burberry summer woman
+733	233	product	Black Mirage
+734	840	global_ref	Bacarat rouge
+735	234	product	Dalal
+736	841	accord	vanilla sweet
+737	842	accord	citrus woody
+738	843	global_ref	Al Rehab Dalal
+739	844	global_family	not classified / fragrance for women and men
+740	235	product	Soxy
+741	845	note	Soybean
+742	846	global_ref	Clinique Happy Simple
+743	236	product	She Walf
+744	847	note	Strawberry
+745	848	global_ref	Escada Moon Sparkle Woman
+746	237	product	Cassanova
+747	849	note	Water Lily
+748	850	accord	floral fruity
+749	851	accord	citrus caramel
+750	852	global_ref	Back To Pink
+751	238	product	Milazombie
+752	853	note	Whiskey
+753	854	accord	whiskey
+754	855	global_ref	Moncera aber fever
+755	856	global_accord	whiskey
+756	239	product	Yiper
+757	857	note	White Chocolate
+758	858	accord	iris woody
+759	859	accord	bae: powdery musky
+760	860	global_ref	Britney Remix
+761	240	product	Heather Sweet
+762	861	accord	fruity rose
+763	862	global_ref	Lancome La Vie Est Belle
+764	241	product	Luminous Lotus
+765	863	note	White Floral
+766	864	family	WHITE FLORAL
+767	865	accord	tuberose
+768	242	product	Sweet Saphier
+769	243	product	Jongleuse
+770	866	global_ref	MFK 724
+771	867	global_family	fragrance for women and men
+772	244	product	Clue Story
+773	868	note	Almond
+774	245	product	Days Girl
+775	869	note	Bellflower
+776	870	global_ref	Jo malone wild bluebell
+777	871	global_family	floral green
+778	246	product	Nozomi
+779	872	global_ref	Miu miu
+780	247	product	Spookie
+781	873	global_ref	5th Avenue
+782	248	product	Still With You
+783	874	note	Earl Grey Tea
+784	249	product	Green Eternity
+785	875	global_ref	Eternity for Men Eau de Parfum Calvin Klein
+786	250	product	Unicorn Lady
+787	876	note	Gardenia
+788	877	global_ref	Flora gorgrous gardenia EDP (zara gardenia)
+789	251	product	Twicy
+790	878	global_ref	Twilly d'hermes
+791	252	product	High Lily
+792	879	note	Lily Of The Valley
+793	880	global_ref	Body shop aqua lily 2008
+794	253	product	Endless Love
+795	881	global_ref	Hugo boss xx women
+796	254	product	Just A Girl
+797	882	global_ref	Issey miyake
+798	255	product	Flower Mag
+799	883	global_ref	Bvlgari splendida magnolia sensuel
+800	256	product	Glowing Face
+801	884	global_ref	Glow jennifer lopez for women
+802	257	product	Baorela
+803	885	global_ref	Elie saab le parfum in white
+804	258	product	moonlit meadow
+805	886	note	Orange Bloosom
+806	887	global_ref	Marfa Memo Paris
+807	259	product	Fire Up
+808	260	product	Gravy Glam
+809	888	global_ref	Guess seductive
+810	261	product	Opiate
+811	262	product	Limited
+812	889	note	Pink Grapefruit
+813	263	product	Lovin You
+814	890	global_ref	Estee Lauder Pleasures (Women)
+815	264	product	In Love 1
+816	891	note	Pomogranate
+817	265	product	Durant
+818	892	note	Red Freesia
+819	893	global_ref	Carolina herrerachic woman
+820	266	product	Scarlett Heels
+821	894	global_ref	Swarosvski
+822	267	product	The Master
+823	895	note	Sicilian Lemon
+824	896	global_ref	Annasui secret wish magic romance
+825	268	product	Hughes
+826	897	note	Tangerine
+827	898	global_ref	Hugo Boss Femme
+828	269	product	Blooming
+829	899	note	Tuberose
+830	900	accord	white floral and tuberose
+831	901	global_ref	Gucci bloom
+832	270	product	Insider
+833	902	global_ref	Sergio Tacchini Donna
+834	271	product	White Light
+835	272	product	Mystery Girl
+836	273	product	Sweet Vanilla
+837	903	family	VANILLA
+838	904	global_ref	Victoria secret sweet vanilla
+839	274	product	Choc Choco
+840	905	note	Caramel
+841	906	accord	vanilla coffe
+842	907	accord	baae: warm spicy
+843	908	accord	nutty
+844	909	global_ref	Vanilla Late
+845	910	global_family	fragrance for women
+846	275	product	CR Seven
+847	911	note	Coconut Nectarine
+848	912	global_ref	The Island
+849	276	product	Mady Girl
+850	913	global_ref	Body Shop Vanilla
+851	277	product	Delight Blue
+852	914	global_ref	LadyMilion Fabulous
+853	278	product	Ice Cream
+854	915	note	Milk
+855	916	global_ref	Victoria Secret Vanilla Ice
+856	917	global_family	—
+857	279	product	Sauve Kiss
+858	918	global_ref	VS Vanilla Lace
+859	280	product	Ana Sweet
+860	919	note	Nectarine
+861	920	global_ref	Annasui Dream
+862	281	product	Nowadays Man
+863	921	note	Peanut
+864	922	global_ref	Montale Chocolate Greedy
+865	282	product	Accadiantaly
+866	923	accord	fruity caramel
+867	924	accord	warm spicy vanilla
+868	925	global_ref	La Nuit Tresore
+869	283	product	Red Sunset
+870	926	global_ref	Black Opium By Yves Saint Laurent
+871	284	product	Sauvage Classy
+872	927	global_ref	Gio Armani My Way Woman
+873	285	product	Tokyo 2020
+874	928	global_ref	paco rabanne olympea
+875	286	product	One Sixty
+876	929	note	Warm Spicy
+877	930	note	Allspice
+878	931	family	WARM SPICY
+879	932	accord	bitter
+880	933	global_ref	VIP Black Red By Carolina Herrera
+881	934	global_accord	bitter
+882	287	product	Expose
+883	935	global_ref	Cerruti 1881 Black Cerruti
+884	288	product	Superclass Man
+885	936	note	Blood Mandarin
+886	937	global_ref	1 Million Rabanne
+887	289	product	-
+888	938	note	Cognac
+889	939	global_ref	Killian Angel'' share
+890	290	product	Sexy Killer
+891	940	global_ref	Black XS for Her Rabanne
+892	291	product	Dwelling
+893	941	global_ref	L'Homme Yves Saint Laurent
+894	292	product	Elvishore
+895	942	global_ref	Elysium Pour Homme By Roja Dove
+896	293	product	Chance
+897	294	product	Tribes
+898	943	note	Nutty
+899	295	product	Mannequin
+900	296	product	Pina Coach
+901	944	accord	conifer
+902	297	product	You So Lovely
+903	945	global_ref	Montale velvet
+904	298	product	Spices Fragrance
+905	946	note	Pine Needle
+906	947	global_ref	Gypsy Water By Byredo
+907	299	product	Glamour Glam
+908	948	global_ref	Signorina Salvatore Ferragamo
+909	300	product	Jeep Black
+910	949	global_ref	Ferrari Black
+911	301	product	Moonlight Muse
+912	302	product	Exits
+913	950	note	Woody
+914	951	family	WOODY
+915	952	global_ref	Black XS L'Exces for Him by Rabanne for men
+916	303	product	Savile Row
+917	953	global_ref	tom ford noir anthracite
+918	304	product	Exotic Escape
+919	305	product	Na Or Ya
+920	954	global_ref	nomade chloe
+921	306	product	Senyasen
+922	955	global_ref	Vibrant Leather by Zara for men
+923	307	product	Floresta
+924	956	global_ref	HB Inmo
+925	308	product	Solitary Man
+926	957	global_ref	Etienne aigner black man
+927	309	product	Fornine
+928	958	global_ref	antonio black seduction
+929	310	product	Pine Fir
+930	311	product	Rafi Ahmad Touch Rafatar
+931	959	global_ref	choco chanel
+932	312	product	Arabic Spice
+933	313	product	English M
+934	960	global_ref	burberry london men
+935	314	product	Sweet Home
+936	961	global_ref	bulgari pour homme
+937	315	product	Black Square
+938	962	note	Darjeeling Tea
+939	963	global_ref	bulgari pour homme soir
+940	316	product	Run Away
+941	964	note	Eucalyptus
+942	965	accord	freahspicy
+943	966	global_ref	calvin klein escape man
+944	317	product	Iron Man
+945	967	global_ref	burberry sport man
+946	318	product	Excelsior
+947	968	global_ref	Ch hot hot hot man
+948	969	global_family	fragrance for men
+949	319	product	Be Mine
+950	970	note	Green Grass
+951	971	global_ref	calvin klein be
+952	320	product	Shine Review
+953	972	global_ref	Zara Vibrant
+954	321	product	Black Snow
+955	973	global_ref	dunhill black
+956	322	product	Moment of Truth
+957	974	global_ref	Drakar N by Guy
+958	323	product	Timber
+959	975	global_ref	pitbull man
+960	324	product	Groove Large
+961	976	global_ref	chanel blue (Bleau de chanel)
+962	325	product	Conoir
+963	977	note	Musky
+964	978	global_ref	antonio banderas men
+965	326	product	Dorsava
+966	979	global_ref	Elixir M
+967	327	product	Lugsary
+968	980	global_ref	Paco One Milion Lucky
+969	981	global_family	woody
+970	328	product	Festive Love
+971	982	note	Pepperwood
+972	983	global_ref	Perfums de marley Herod
+973	329	product	Pyramid
+974	984	accord	fresh spicy. citrus
+975	985	global_ref	Dunhil L
+976	330	product	Guardino
+977	986	global_ref	Gucci envy me
+978	331	product	Haleef
+979	987	global_ref	Her un jardin
+980	332	product	Esava-X
+981	988	note	Praline
+982	989	global_ref	C Prive
+983	333	product	Golden Dust
+984	990	note	Rhubarb
+985	991	global_ref	Pacorabane Phantom
+986	334	product	Camaraderia
+987	335	product	tobacco
+988	992	global_ref	Tom ford Tabaco vanila
+989	336	product	Vanilla Woody
+990	337	product	Satnight
+991	993	global_ref	burberry weekend
+992	994	global_family	citrus
+993	338	product	M Too Man
+994	995	note	Violet Leaf
+995	996	global_ref	bulgari man
+996	339	product	Dhuga Light
+997	997	global_ref	tomf oud tobacco

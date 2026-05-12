@@ -13,7 +13,7 @@ class CKE_loader(Data):
         super().__init__(args, path)
 
     def _generate_train_kg_batch(self):
-        exist_heads = self.kg_dict.keys()
+        exist_heads = list(self.kg_dict.keys())
         if self.batch_size_kg <= len(exist_heads):
             heads = rd.sample(exist_heads, self.batch_size_kg)
         else:

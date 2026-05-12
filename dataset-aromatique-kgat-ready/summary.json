@@ -1,0 +1,14 @@
+{
+  "n_entities": 998,
+  "n_products_items": 340,
+  "n_relations": 7,
+  "n_kg_triples": 9250,
+  "n_train_users": 68,
+  "n_train_interactions": 1490,
+  "n_test_users": 68,
+  "n_test_interactions": 406,
+  "product_id_range": "0..339",
+  "non_product_entity_id_range": "340..997",
+  "white_sense_new_id": 68,
+  "white_sense_old_id": 316
+}

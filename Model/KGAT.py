@@ -4,7 +4,7 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import tensorflow as tf
+from utility.tf_compat import tf, xavier_initializer
 import os
 import numpy as np
 import scipy.sparse as sp
@@ -115,7 +115,7 @@ class KGAT(object):
     def _build_weights(self):
         all_weights = dict()
 
-        initializer = tf.contrib.layers.xavier_initializer()
+        initializer = xavier_initializer()
 
         if self.pretrain_data is None:
             all_weights['user_embed'] = tf.Variable(initializer([self.n_users, self.emb_dim]), name='user_embed')
@@ -376,11 +376,11 @@ class KGAT(object):
 
     def _convert_sp_mat_to_sp_tensor(self, X):
         coo = X.tocoo().astype(np.float32)
-        indices = np.mat([coo.row, coo.col]).transpose()
+        indices = np.column_stack((coo.row, coo.col)).astype(np.int64)
         return tf.SparseTensor(indices, coo.data, coo.shape)
 
     def _create_attentive_A_out(self):
-        indices = np.mat([self.all_h_list, self.all_t_list]).transpose()
+        indices = np.column_stack((self.all_h_list, self.all_t_list)).astype(np.int64)
         A = tf.sparse.softmax(tf.SparseTensor(indices, self.A_values, self.A_in.shape))
         return A
 
@@ -417,7 +417,7 @@ class KGAT(object):
             shape = variable.get_shape()  # shape is an array of tf.Dimension
             variable_parameters = 1
             for dim in shape:
-                variable_parameters *= dim.value
+                variable_parameters *= int(dim)
             total_parameters += variable_parameters
         if self.verbose > 0:
             print("#params: %d" % total_parameters)

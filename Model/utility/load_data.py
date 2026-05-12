@@ -26,7 +26,7 @@ class Data(object):
 
         self.train_data, self.train_user_dict = self._load_ratings(train_file)
         self.test_data, self.test_user_dict = self._load_ratings(test_file)
-        self.exist_users = self.train_user_dict.keys()
+        self.exist_users = list(self.train_user_dict.keys())
 
         self._statistic_ratings()
 

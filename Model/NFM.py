@@ -4,7 +4,7 @@ Tensorflow Implementation of the Baseline model, NFM, in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import tensorflow as tf
+from utility.tf_compat import tf, xavier_initializer
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
@@ -68,7 +68,7 @@ class NFM(object):
 
     def _build_weights(self):
         all_weights = dict()
-        initializer = tf.contrib.layers.xavier_initializer()
+        initializer = xavier_initializer()
 
         all_weights['var_linear'] = tf.Variable(initializer([self.n_features, 1]), name='var_linear')
 
@@ -166,7 +166,7 @@ class NFM(object):
             shape = variable.get_shape()  # shape is an array of tf.Dimension
             variable_parameters = 1
             for dim in shape:
-                variable_parameters *= dim.value
+                variable_parameters *= int(dim)
             total_parameters += variable_parameters
         if self.verbose > 0:
             print("#params: %d" % total_parameters)
