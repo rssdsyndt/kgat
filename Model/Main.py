@@ -33,6 +33,10 @@ def load_pretrained_data(args):
     return pretrain_data
 
 
+def _scalar(x):
+    return float(np.asarray(x).reshape(-1)[0])
+
+
 if __name__ == '__main__':
     # get argument settings.
     tf.set_random_seed(2019)
@@ -225,6 +229,8 @@ if __name__ == '__main__':
     stopping_step = 0
     should_stop = False
 
+    show_step = 10
+
     for epoch in range(args.epoch):
         t1 = time()
         loss, base_loss, kge_loss, reg_loss = 0., 0., 0., 0.
@@ -283,11 +289,10 @@ if __name__ == '__main__':
             print('ERROR: loss@phase2 is nan.')
             sys.exit()
 
-        show_step = 10
         if (epoch + 1) % show_step != 0:
             if args.verbose > 0 and epoch % args.verbose == 0:
                 perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f + %.5f]' % (
-                    epoch, time() - t1, loss, base_loss, kge_loss, reg_loss)
+                    epoch, time() - t1, _scalar(loss), _scalar(base_loss), _scalar(kge_loss), _scalar(reg_loss))
                 print(perf_str)
             continue
 
@@ -315,7 +320,7 @@ if __name__ == '__main__':
         if args.verbose > 0:
             perf_str = 'Epoch %d [%.1fs + %.1fs]: train==[%.5f=%.5f + %.5f + %.5f], recall=[%.5f, %.5f], ' \
                        'precision=[%.5f, %.5f], hit=[%.5f, %.5f], ndcg=[%.5f, %.5f]' % \
-                       (epoch, t2 - t1, t3 - t2, loss, base_loss, kge_loss, reg_loss, ret['recall'][0], ret['recall'][-1],
+                       (epoch, t2 - t1, t3 - t2, _scalar(loss), _scalar(base_loss), _scalar(kge_loss), _scalar(reg_loss), ret['recall'][0], ret['recall'][-1],
                         ret['precision'][0], ret['precision'][-1], ret['hit_ratio'][0], ret['hit_ratio'][-1],
                         ret['ndcg'][0], ret['ndcg'][-1])
             print(perf_str)
@@ -333,6 +338,23 @@ if __name__ == '__main__':
         if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
             save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
             print('save the weights in path: ', weights_save_path)
+
+    if len(rec_loger) == 0:
+        users_to_test = list(data_generator.test_user_dict.keys())
+        ret = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
+
+        rec_loger.append(ret['recall'])
+        pre_loger.append(ret['precision'])
+        ndcg_loger.append(ret['ndcg'])
+        hit_loger.append(ret['hit_ratio'])
+
+        if args.verbose > 0:
+            perf_str = 'Final Eval [%.1fs]: recall=[%.5f, %.5f], precision=[%.5f, %.5f], hit=[%.5f, %.5f], ndcg=[%.5f, %.5f]' % \
+                       (time() - t0, ret['recall'][0], ret['recall'][-1],
+                        ret['precision'][0], ret['precision'][-1],
+                        ret['hit_ratio'][0], ret['hit_ratio'][-1],
+                        ret['ndcg'][0], ret['ndcg'][-1])
+            print(perf_str)
 
     recs = np.array(rec_loger)
     pres = np.array(pre_loger)
