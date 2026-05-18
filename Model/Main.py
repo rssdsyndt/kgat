@@ -14,6 +14,7 @@ from CKE import CKE
 from CFKG import CFKG
 from NFM import NFM
 from KGAT import KGAT
+from CRHKGE import CRHKGE
 
 
 import os
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     config['n_relations'] = data_generator.n_relations
     config['n_entities'] = data_generator.n_entities
 
-    if args.model_type in ['kgat', 'cfkg']:
+    if args.model_type in ['kgat', 'cr_hkge', 'cfkg']:
         "Load the laplacian matrix."
         config['A_in'] = sum(data_generator.lap_list)
 
@@ -64,6 +65,11 @@ if __name__ == '__main__':
         config['all_r_list'] = data_generator.all_r_list
         config['all_t_list'] = data_generator.all_t_list
         config['all_v_list'] = data_generator.all_v_list
+
+        if args.model_type == 'cr_hkge' and hasattr(data_generator, 'get_cr_hkge_config'):
+            config['cr_hkge_config'] = data_generator.get_cr_hkge_config()
+            config['lap_list'] = data_generator.lap_list
+            config['adj_r_list'] = data_generator.adj_r_list
 
     t0 = time()
 
@@ -95,6 +101,12 @@ if __name__ == '__main__':
     elif args.model_type in ['kgat']:
         model = KGAT(data_config=config, pretrain_data=pretrain_data, args=args)
 
+    elif args.model_type in ['cr_hkge']:
+        model = CRHKGE(data_config=config, pretrain_data=pretrain_data, args=args)
+
+    else:
+        raise NotImplementedError('unsupported model_type: %s' % args.model_type)
+
     saver = tf.train.Saver()
 
     """
@@ -106,7 +118,7 @@ if __name__ == '__main__':
             weights_save_path = '%sweights/%s/%s/l%s_r%s' % (args.weights_path, args.dataset, model.model_type,
                                                              str(args.lr), '-'.join([str(r) for r in eval(args.regs)]))
 
-        elif args.model_type in ['ncf', 'nfm', 'kgat']:
+        elif args.model_type in ['ncf', 'nfm', 'kgat', 'cr_hkge']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
             weights_save_path = '%sweights/%s/%s/%s/l%s_r%s' % (
                 args.weights_path, args.dataset, model.model_type, layer, str(args.lr), '-'.join([str(r) for r in eval(args.regs)]))
@@ -127,7 +139,7 @@ if __name__ == '__main__':
             pretrain_path = '%sweights/%s/%s/l%s_r%s' % (args.weights_path, args.dataset, model.model_type, str(args.lr),
                                                              '-'.join([str(r) for r in eval(args.regs)]))
 
-        elif args.model_type in ['ncf', 'nfm', 'kgat']:
+        elif args.model_type in ['ncf', 'nfm', 'kgat', 'cr_hkge']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
             pretrain_path = '%sweights/%s/%s/%s/l%s_r%s' % (
                 args.weights_path, args.dataset, model.model_type, layer, str(args.lr), '-'.join([str(r) for r in eval(args.regs)]))
@@ -263,7 +275,7 @@ if __name__ == '__main__':
         Alternative Training for KGAT:
         ... phase 2: to train the KGE method & update the attentive Laplacian matrix.
         """
-        if args.model_type in ['kgat']:
+        if args.model_type in ['kgat', 'cr_hkge']:
 
             n_A_batch = len(data_generator.all_h_list) // args.batch_size_kg + 1
 
@@ -378,3 +390,6 @@ if __name__ == '__main__':
     f.write('embed_size=%d, lr=%.4f, layer_size=%s, node_dropout=%s, mess_dropout=%s, regs=%s, adj_type=%s, use_att=%s, use_kge=%s, pretrain=%d\n\t%s\n'
             % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
     f.close()
+
+    if hasattr(model, 'export_artifacts') and int(getattr(args, 'cr_export_embeddings', 0)) == 1:
+        model.export_artifacts(sess, args, data_generator, final_perf)

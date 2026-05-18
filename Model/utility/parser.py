@@ -42,7 +42,7 @@ def parse_args():
                         help='Learning rate.')
 
     parser.add_argument('--model_type', nargs='?', default='kgat',
-                        help='Specify a loss type from {kgat, bprmf, fm, nfm, cke, cfkg}.')
+                        help='Specify a model type from {kgat, cr_hkge, bprmf, fm, nfm, cke, cfkg}.')
     parser.add_argument('--adj_type', nargs='?', default='si',
                         help='Specify the type of the adjacency (laplacian) matrix from {bi, si}.')
     parser.add_argument('--alg_type', nargs='?', default='ngcf',
@@ -77,5 +77,20 @@ def parse_args():
     
     parser.add_argument('--l1_flag', type=bool, default=True,
                         help='Flase: using the L2 norm, True: using the L1 norm.')
+
+    parser.add_argument('--cr_use_relation_weight', type=int, default=1,
+                        help='CR-HKGE only. 1: use relation-type specific attention weights, 0: disable.')
+    parser.add_argument('--cr_use_cross_ref', type=int, default=1,
+                        help='CR-HKGE only. 1: use cross-reference propagation, 0: disable.')
+    parser.add_argument('--cr_relation_weight_mode', nargs='?', default='semantic',
+                        help='CR-HKGE only. semantic: tie forward/inverse KG relations, expanded: one weight per expanded relation.')
+    parser.add_argument('--cr_cross_ref_alpha', type=float, default=1.0,
+                        help='CR-HKGE only. Scalar multiplier for cross-reference context.')
+    parser.add_argument('--cr_export_embeddings', type=int, default=0,
+                        help='CR-HKGE only. 1: export product/entity embeddings and relation weights after training.')
+    parser.add_argument('--cr_artifact_path', nargs='?', default='../artifacts/cr_hkge',
+                        help='CR-HKGE only. Directory used for exported artifacts.')
+    parser.add_argument('--cr_model_version', nargs='?', default='cr_hkge_v1',
+                        help='CR-HKGE only. Version label written to exported artifacts.')
 
     return parser.parse_args()

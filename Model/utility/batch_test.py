@@ -38,7 +38,7 @@ elif args.model_type in ['fm','nfm']:
     data_generator = NFM_loader(args=args, path=args.data_path + args.dataset)
     batch_test_flag = True
 
-elif args.model_type in ['kgat']:
+elif args.model_type in ['kgat', 'cr_hkge']:
     data_generator = KGAT_loader(args=args, path=args.data_path + args.dataset)
     batch_test_flag = False
 

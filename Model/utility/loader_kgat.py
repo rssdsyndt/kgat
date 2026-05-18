@@ -10,6 +10,7 @@ from time import time
 import scipy.sparse as sp
 import random as rd
 import collections
+import os
 
 class KGAT_loader(Data):
     def __init__(self, args, path):
@@ -26,11 +27,20 @@ class KGAT_loader(Data):
 
         self.all_h_list, self.all_r_list, self.all_t_list, self.all_v_list = self._get_all_kg_data()
 
+        # CR-HKGE uses the raw Aromatique KG semantics in addition to KGAT's
+        # expanded relation IDs. Keep vanilla KGAT's loader path unchanged.
+        if getattr(args, 'model_type', '') == 'cr_hkge':
+            self.cr_hkge_data = self._build_cr_hkge_data()
+        else:
+            self.cr_hkge_data = {}
+
 
     def _get_relational_adj_list(self):
         t1 = time()
         adj_mat_list = []
         adj_r_list = []
+        raw_n_relations = self.n_relations
+        self.n_raw_relations = raw_n_relations
 
         def _np_mat2sp_adj(np_mat, row_pre, col_pre):
             n_all = self.n_users + self.n_entities
@@ -53,7 +63,7 @@ class KGAT_loader(Data):
         adj_r_list.append(0)
 
         adj_mat_list.append(R_inv)
-        adj_r_list.append(self.n_relations + 1)
+        adj_r_list.append(raw_n_relations + 1)
         print('\tconvert ratings into adj mat done.')
 
         for r_id in self.relation_dict.keys():
@@ -62,7 +72,7 @@ class KGAT_loader(Data):
             adj_r_list.append(r_id + 1)
 
             adj_mat_list.append(K_inv)
-            adj_r_list.append(r_id + 2 + self.n_relations)
+            adj_r_list.append(r_id + 2 + raw_n_relations)
         print('\tconvert %d relational triples into adj mat done. @%.4fs' %(len(adj_mat_list), time()-t1))
 
         self.n_relations = len(adj_r_list)
@@ -180,6 +190,146 @@ class KGAT_loader(Data):
 
 
         return new_h_list, new_r_list, new_t_list, new_v_list
+
+    def _load_relation_id_to_name(self):
+        relation_file = os.path.join(self.path, 'relation2id.txt')
+        relation_id_to_name = {}
+
+        if os.path.exists(relation_file):
+            with open(relation_file, 'r', encoding='utf-8') as f:
+                lines = [line.strip() for line in f.readlines() if line.strip()]
+
+            for line in lines[1:]:
+                parts = line.split()
+                if len(parts) >= 2:
+                    relation_name = ' '.join(parts[:-1])
+                    relation_id = int(parts[-1])
+                    relation_id_to_name[relation_id] = relation_name
+
+        for relation_id in range(self.n_raw_relations):
+            relation_id_to_name.setdefault(relation_id, 'relation_%d' % relation_id)
+
+        return relation_id_to_name
+
+    def _row_normalize_sparse(self, rows, cols, n_rows, n_cols):
+        if len(rows) == 0:
+            return sp.coo_matrix((n_rows, n_cols), dtype=np.float32)
+
+        rows = np.asarray(rows, dtype=np.int64)
+        cols = np.asarray(cols, dtype=np.int64)
+        vals = np.ones(len(rows), dtype=np.float32)
+        mat = sp.coo_matrix((vals, (rows, cols)), shape=(n_rows, n_cols), dtype=np.float32)
+        mat.sum_duplicates()
+
+        mat = mat.tocoo()
+        row_sum = np.asarray(mat.sum(1)).flatten()
+        norm_vals = mat.data / row_sum[mat.row]
+        return sp.coo_matrix((norm_vals, (mat.row, mat.col)), shape=(n_rows, n_cols), dtype=np.float32)
+
+    def _build_cr_hkge_data(self):
+        relation_id_to_name = self._load_relation_id_to_name()
+        n_nodes = self.n_users + self.n_entities
+
+        expanded_relation_names = ['unknown_relation_%d' % i for i in range(self.n_relations)]
+        expanded_relation_names[0] = 'user_interacts_item'
+        inverse_interaction_id = self.n_raw_relations + 1
+        if inverse_interaction_id < len(expanded_relation_names):
+            expanded_relation_names[inverse_interaction_id] = 'item_interacted_by_user'
+
+        relation_type_names = ['interaction']
+        for raw_relation_id in range(self.n_raw_relations):
+            relation_type_names.append(relation_id_to_name[raw_relation_id])
+
+            forward_id = raw_relation_id + 1
+            inverse_id = raw_relation_id + 2 + self.n_raw_relations
+            if forward_id < len(expanded_relation_names):
+                expanded_relation_names[forward_id] = relation_id_to_name[raw_relation_id]
+            if inverse_id < len(expanded_relation_names):
+                expanded_relation_names[inverse_id] = 'inverse_%s' % relation_id_to_name[raw_relation_id]
+
+        expanded_relation_type_ids = np.zeros(self.n_relations, dtype=np.int32)
+        expanded_relation_type_ids[0] = 0
+        if inverse_interaction_id < len(expanded_relation_type_ids):
+            expanded_relation_type_ids[inverse_interaction_id] = 0
+
+        for raw_relation_id in range(self.n_raw_relations):
+            relation_type_id = raw_relation_id + 1
+            forward_id = raw_relation_id + 1
+            inverse_id = raw_relation_id + 2 + self.n_raw_relations
+            if forward_id < len(expanded_relation_type_ids):
+                expanded_relation_type_ids[forward_id] = relation_type_id
+            if inverse_id < len(expanded_relation_type_ids):
+                expanded_relation_type_ids[inverse_id] = relation_type_id
+
+        name_to_relation_id = {name: relation_id for relation_id, name in relation_id_to_name.items()}
+        inspired_by_id = name_to_relation_id.get('inspired_by', 0)
+        global_attr_relation_ids = [
+            relation_id for relation_id, name in relation_id_to_name.items()
+            if name in ['has_global_accord', 'belongs_to_global_family']
+        ]
+
+        product_global_rows, product_global_cols = [], []
+        global_attr_edges = collections.defaultdict(lambda: ([], []))
+        product_to_global_ref = collections.defaultdict(list)
+        global_ref_to_attributes = collections.defaultdict(list)
+        enriched_product_ids = set()
+
+        for head, relation, tail in self.kg_data:
+            head = int(head)
+            relation = int(relation)
+            tail = int(tail)
+
+            if relation == inspired_by_id and head < self.n_items:
+                product_node = self.n_users + head
+                global_ref_node = self.n_users + tail
+                product_global_rows.append(product_node)
+                product_global_cols.append(global_ref_node)
+                product_to_global_ref[head].append(tail)
+                enriched_product_ids.add(head)
+
+            if relation in global_attr_relation_ids:
+                head_node = self.n_users + head
+                tail_node = self.n_users + tail
+                rows, cols = global_attr_edges[relation]
+                rows.append(head_node)
+                cols.append(tail_node)
+                global_ref_to_attributes[head].append((relation, tail))
+
+        product_global_mat = self._row_normalize_sparse(
+            product_global_rows, product_global_cols, n_nodes, n_nodes)
+
+        global_attr_relation_mats = []
+        for relation_id in sorted(global_attr_edges.keys()):
+            rows, cols = global_attr_edges[relation_id]
+            mat = self._row_normalize_sparse(rows, cols, n_nodes, n_nodes)
+            global_attr_relation_mats.append((relation_id, mat))
+
+        product_mask = np.zeros((n_nodes, 1), dtype=np.float32)
+        for product_id in enriched_product_ids:
+            product_mask[self.n_users + product_id, 0] = 1.0
+
+        print('\tCR-HKGE metadata: enriched_products=%d, product_global_edges=%d, global_attr_relations=%d.' %
+              (len(enriched_product_ids), len(product_global_rows), len(global_attr_relation_mats)))
+
+        return {
+            'raw_n_relations': self.n_raw_relations,
+            'relation_id_to_name': relation_id_to_name,
+            'expanded_relation_names': expanded_relation_names,
+            'expanded_relation_type_ids': expanded_relation_type_ids,
+            'relation_type_names': relation_type_names,
+            'inspired_by_raw_relation_id': inspired_by_id,
+            'inspired_by_expanded_relation_id': inspired_by_id + 1,
+            'global_attr_relation_ids': global_attr_relation_ids,
+            'product_global_mat': product_global_mat,
+            'global_attr_relation_mats': global_attr_relation_mats,
+            'product_mask': product_mask,
+            'enriched_product_ids': sorted(enriched_product_ids),
+            'product_to_global_ref': {k: sorted(v) for k, v in product_to_global_ref.items()},
+            'global_ref_to_attributes': {k: v for k, v in global_ref_to_attributes.items()},
+        }
+
+    def get_cr_hkge_config(self):
+        return self.cr_hkge_data
 
     def _generate_train_A_batch(self):
         exist_heads = list(self.all_kg_dict.keys())
