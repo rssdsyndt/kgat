@@ -200,7 +200,7 @@ class CRHKGE(KGAT):
             return None
 
         return [
-            (int(relation_id), self._split_A_hat(lap))
+            (int(relation_id), self._split_A_hat(lap.tocsr()))
             for relation_id, lap in zip(self.cr_adj_r_list, self.cr_lap_list)
         ]
 
