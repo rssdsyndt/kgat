@@ -84,6 +84,12 @@ def parse_args():
                         help='CR-HKGE only. 1: use cross-reference propagation, 0: disable.')
     parser.add_argument('--cr_relation_weight_mode', nargs='?', default='semantic',
                         help='CR-HKGE only. semantic: tie forward/inverse KG relations, expanded: one weight per expanded relation.')
+    parser.add_argument('--cr_relation_prior_mode', nargs='?', default='none',
+                        help='CR-HKGE only. none: zero-init relation logits; fragrance: initialize relation logits with fragrance-domain priors.')
+    parser.add_argument('--cr_relation_prior_strength', type=float, default=1.0,
+                        help='CR-HKGE only. Multiplier for relation prior logits when --cr_relation_prior_mode is enabled.')
+    parser.add_argument('--cr_relation_attention_scale', nargs='?', default='type_count',
+                        help='CR-HKGE only. probability: use softmax lambda directly in attention scores; type_count: multiply by number of relation types so uniform lambda preserves KGAT score scale.')
     parser.add_argument('--cr_relation_aware_message', type=int, default=0,
                         help='CR-HKGE only. 1: apply relation weights to neighborhood message propagation, 0: keep KGAT propagation strict.')
     parser.add_argument('--cr_relation_message_scale', nargs='?', default='type_count',

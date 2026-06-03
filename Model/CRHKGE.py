@@ -22,6 +22,9 @@ class CRHKGE(KGAT):
         self.cr_use_relation_weight = bool(int(getattr(args, 'cr_use_relation_weight', 1)))
         self.cr_use_cross_ref = bool(int(getattr(args, 'cr_use_cross_ref', 1)))
         self.cr_relation_weight_mode = getattr(args, 'cr_relation_weight_mode', 'semantic')
+        self.cr_relation_prior_mode = getattr(args, 'cr_relation_prior_mode', 'none')
+        self.cr_relation_prior_strength = float(getattr(args, 'cr_relation_prior_strength', 1.0))
+        self.cr_relation_attention_scale = getattr(args, 'cr_relation_attention_scale', 'type_count')
         self.cr_relation_aware_message = bool(int(getattr(args, 'cr_relation_aware_message', 0)))
         self.cr_relation_message_scale = getattr(args, 'cr_relation_message_scale', 'type_count')
         self.cr_cross_ref_alpha = float(getattr(args, 'cr_cross_ref_alpha', 1.0))
@@ -72,13 +75,22 @@ class CRHKGE(KGAT):
         self.cr_n_relation_types = len(self.cr_relation_type_names)
 
         if self.cr_use_relation_weight:
+            initial_logits = self._initial_relation_type_logits()
             all_weights['cr_relation_type_logits'] = tf.Variable(
-                tf.zeros([self.cr_n_relation_types], dtype=tf.float32),
+                tf.constant(initial_logits, dtype=tf.float32),
                 name='cr_relation_type_logits')
             self.cr_relation_type_probs = tf.nn.softmax(
                 all_weights['cr_relation_type_logits'],
                 name='cr_relation_type_probs')
-            self.cr_relation_type_multipliers = self.cr_relation_type_probs
+            if self.cr_relation_attention_scale == 'type_count':
+                self.cr_relation_type_multipliers = (
+                    self.cr_relation_type_probs * float(self.cr_n_relation_types))
+            elif self.cr_relation_attention_scale == 'probability':
+                self.cr_relation_type_multipliers = self.cr_relation_type_probs
+            else:
+                raise ValueError('unsupported cr_relation_attention_scale: %s' %
+                                 self.cr_relation_attention_scale)
+
             if self.cr_relation_message_scale == 'type_count':
                 self.cr_relation_type_message_multipliers = (
                     self.cr_relation_type_probs * float(self.cr_n_relation_types))
@@ -119,6 +131,38 @@ class CRHKGE(KGAT):
             self.cr_cross_ref_gate = tf.constant(0.0, dtype=tf.float32)
 
         return all_weights
+
+    def _initial_relation_type_logits(self):
+        if self.cr_relation_prior_mode == 'none':
+            return np.zeros([self.cr_n_relation_types], dtype=np.float32)
+
+        if self.cr_relation_prior_mode != 'fragrance':
+            raise ValueError('unsupported cr_relation_prior_mode: %s' %
+                             self.cr_relation_prior_mode)
+
+        # Domain priors are intentionally modest: they give fragrance-specific
+        # relations a useful starting scale while keeping the logits trainable.
+        prior_by_name = {
+            'interaction': 1.0,
+            'inspired_by': 1.8,
+            'has_accord': 2.0,
+            'has_visual_note': 0.8,
+            'belongs_to_family': 1.8,
+            'sem_similar': 3.0,
+            'has_global_accord': 1.2,
+            'belongs_to_global_family': 1.2,
+        }
+
+        priors = []
+        for relation_name in self.cr_relation_type_names:
+            normalized_name = relation_name
+            if normalized_name.startswith('inverse_'):
+                normalized_name = normalized_name[len('inverse_'):]
+            priors.append(prior_by_name.get(normalized_name, 1.0))
+
+        priors = np.asarray(priors, dtype=np.float32)
+        priors = np.maximum(priors, 1e-6)
+        return np.log(priors) * self.cr_relation_prior_strength
 
     def _build_cross_ref_tensors(self):
         product_global_mat = self.cr_config.get('product_global_mat')
@@ -387,6 +431,9 @@ class CRHKGE(KGAT):
             'cr_use_relation_weight': self.cr_use_relation_weight,
             'cr_use_cross_ref': self.cr_use_cross_ref,
             'cr_relation_weight_mode': self.cr_relation_weight_mode,
+            'cr_relation_prior_mode': self.cr_relation_prior_mode,
+            'cr_relation_prior_strength': self.cr_relation_prior_strength,
+            'cr_relation_attention_scale': self.cr_relation_attention_scale,
             'cr_relation_aware_message': self.cr_relation_aware_message,
             'cr_relation_message_scale': self.cr_relation_message_scale,
             'cr_cross_ref_alpha': self.cr_cross_ref_alpha,
