@@ -84,12 +84,18 @@ def parse_args():
                         help='CR-HKGE only. 1: use cross-reference propagation, 0: disable.')
     parser.add_argument('--cr_relation_weight_mode', nargs='?', default='semantic',
                         help='CR-HKGE only. semantic: tie forward/inverse KG relations, expanded: one weight per expanded relation.')
-    parser.add_argument('--cr_relation_aware_message', type=int, default=1,
+    parser.add_argument('--cr_relation_aware_message', type=int, default=0,
                         help='CR-HKGE only. 1: apply relation weights to neighborhood message propagation, 0: keep KGAT propagation strict.')
     parser.add_argument('--cr_relation_message_scale', nargs='?', default='type_count',
                         help='CR-HKGE only. probability: use softmax lambda directly for messages; type_count: multiply by number of relation types to preserve KGAT message scale.')
     parser.add_argument('--cr_cross_ref_alpha', type=float, default=1.0,
                         help='CR-HKGE only. Scalar multiplier for cross-reference context.')
+    parser.add_argument('--cr_cross_ref_bi_interaction', type=int, default=0,
+                        help='CR-HKGE only. 1: inject cross-reference context into KGAT bi-interaction branch, 0: inject only into additive branch.')
+    parser.add_argument('--cr_cross_ref_gate', type=int, default=0,
+                        help='CR-HKGE only. 1: use a trainable scalar gate for cross-reference context.')
+    parser.add_argument('--cr_cross_ref_gate_init', type=float, default=-2.0,
+                        help='CR-HKGE only. Initial logit for the trainable cross-reference gate.')
     parser.add_argument('--cr_best_metric', nargs='?', default='ndcg',
                         help='CR-HKGE only. Metric used to save/export the best checkpoint: recall, precision, hit, or ndcg.')
     parser.add_argument('--cr_best_k', type=int, default=3,

@@ -19,6 +19,7 @@ from CRHKGE import CRHKGE
 
 import os
 import sys
+import random as rd
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 def load_pretrained_data(args):
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     # get argument settings.
     tf.set_random_seed(2019)
     np.random.seed(2019)
+    rd.seed(2019)
     args = parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)

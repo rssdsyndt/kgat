@@ -22,9 +22,12 @@ class CRHKGE(KGAT):
         self.cr_use_relation_weight = bool(int(getattr(args, 'cr_use_relation_weight', 1)))
         self.cr_use_cross_ref = bool(int(getattr(args, 'cr_use_cross_ref', 1)))
         self.cr_relation_weight_mode = getattr(args, 'cr_relation_weight_mode', 'semantic')
-        self.cr_relation_aware_message = bool(int(getattr(args, 'cr_relation_aware_message', 1)))
+        self.cr_relation_aware_message = bool(int(getattr(args, 'cr_relation_aware_message', 0)))
         self.cr_relation_message_scale = getattr(args, 'cr_relation_message_scale', 'type_count')
         self.cr_cross_ref_alpha = float(getattr(args, 'cr_cross_ref_alpha', 1.0))
+        self.cr_cross_ref_bi_interaction = bool(int(getattr(args, 'cr_cross_ref_bi_interaction', 0)))
+        self.cr_cross_ref_gate_enabled = bool(int(getattr(args, 'cr_cross_ref_gate', 0)))
+        self.cr_cross_ref_gate_init = float(getattr(args, 'cr_cross_ref_gate_init', -2.0))
         self.cr_model_version = getattr(args, 'cr_model_version', 'cr_hkge_v1')
 
         self.cr_config = data_config.get('cr_hkge_config', {})
@@ -101,7 +104,19 @@ class CRHKGE(KGAT):
                 all_weights['b_cr_%d' % k] = tf.Variable(
                     initializer([1, current_dim]), name='b_cr_%d' % k)
 
+            if self.cr_cross_ref_gate_enabled:
+                all_weights['cr_cross_ref_gate_logit'] = tf.Variable(
+                    tf.constant(self.cr_cross_ref_gate_init, dtype=tf.float32),
+                    name='cr_cross_ref_gate_logit')
+                self.cr_cross_ref_gate = tf.sigmoid(
+                    all_weights['cr_cross_ref_gate_logit'],
+                    name='cr_cross_ref_gate')
+            else:
+                self.cr_cross_ref_gate = tf.constant(1.0, dtype=tf.float32)
+
             self._build_cross_ref_tensors()
+        else:
+            self.cr_cross_ref_gate = tf.constant(0.0, dtype=tf.float32)
 
         return all_weights
 
@@ -204,6 +219,9 @@ class CRHKGE(KGAT):
         return kg_score * relation_multiplier
 
     def _create_bi_interaction_embed(self):
+        if not self.cr_use_cross_ref and not self.cr_relation_aware_message:
+            return super(CRHKGE, self)._create_bi_interaction_embed()
+
         A = self.A_in
         A_fold_hat = self._split_A_hat(A)
         relation_A_fold_hat = self._build_relation_aware_A_fold_hat()
@@ -223,15 +241,20 @@ class CRHKGE(KGAT):
 
                 side_embeddings = tf.concat(temp_embed, 0)
 
+            sum_side_embeddings = side_embeddings
+            bi_side_embeddings = side_embeddings
             if self.cr_use_cross_ref:
-                side_embeddings = side_embeddings + self._create_cross_reference_context(ego_embeddings, k)
+                cross_ref_context = self._create_cross_reference_context(ego_embeddings, k)
+                sum_side_embeddings = side_embeddings + cross_ref_context
+                if self.cr_cross_ref_bi_interaction:
+                    bi_side_embeddings = sum_side_embeddings
 
-            add_embeddings = ego_embeddings + side_embeddings
+            add_embeddings = ego_embeddings + sum_side_embeddings
 
             sum_embeddings = tf.nn.leaky_relu(
                 tf.matmul(add_embeddings, self.weights['W_gc_%d' % k]) + self.weights['b_gc_%d' % k])
 
-            bi_embeddings = tf.multiply(ego_embeddings, side_embeddings)
+            bi_embeddings = tf.multiply(ego_embeddings, bi_side_embeddings)
             bi_embeddings = tf.nn.leaky_relu(
                 tf.matmul(bi_embeddings, self.weights['W_bi_%d' % k]) + self.weights['b_bi_%d' % k])
 
@@ -299,7 +322,7 @@ class CRHKGE(KGAT):
         inspired_multiplier = self._relation_multiplier_for_expanded_id(
             self.cr_inspired_expanded_relation_id)
 
-        return (self.cr_cross_ref_alpha * inspired_multiplier *
+        return (self.cr_cross_ref_alpha * self.cr_cross_ref_gate * inspired_multiplier *
                 transformed_context * self.cr_product_mask_tensor)
 
     def export_artifacts(self, sess, args, data_generator, final_perf):
@@ -367,6 +390,10 @@ class CRHKGE(KGAT):
             'cr_relation_aware_message': self.cr_relation_aware_message,
             'cr_relation_message_scale': self.cr_relation_message_scale,
             'cr_cross_ref_alpha': self.cr_cross_ref_alpha,
+            'cr_cross_ref_bi_interaction': self.cr_cross_ref_bi_interaction,
+            'cr_cross_ref_gate': self.cr_cross_ref_gate_enabled,
+            'cr_cross_ref_gate_init': self.cr_cross_ref_gate_init,
+            'cr_cross_ref_gate_value': self._cross_ref_gate_value(sess),
             'cr_best_metric': getattr(args, 'cr_best_metric', 'ndcg'),
             'cr_best_k': int(getattr(args, 'cr_best_k', 3)),
             'cr_export_best_checkpoint': bool(int(getattr(args, 'cr_export_best_checkpoint', 1))),
@@ -383,6 +410,11 @@ class CRHKGE(KGAT):
 
         print('export CR-HKGE artifacts in path: ', artifact_dir)
         return artifact_dir
+
+    def _cross_ref_gate_value(self, sess):
+        if not self.cr_use_cross_ref:
+            return 0.0
+        return float(sess.run(self.cr_cross_ref_gate))
 
     def _relation_weight_rows(self, sess):
         if self.cr_use_relation_weight:

@@ -43,9 +43,12 @@ variant_args() {
     A4_no_novelty_modules)
       echo "--cr_use_relation_weight 0 --cr_use_cross_ref 0 --cr_relation_weight_mode semantic --cr_relation_aware_message 0 --cr_relation_message_scale type_count"
       ;;
+    FINAL_strict_gated)
+      echo "--cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 1 --cr_cross_ref_gate_init -2.0"
+      ;;
     *)
       echo "unknown variant: $1" >&2
-      echo "available: A1_no_crossref A2_no_relation_message A3_probability_scale A4_no_novelty_modules" >&2
+      echo "available: A1_no_crossref A2_no_relation_message A3_probability_scale A4_no_novelty_modules FINAL_strict_gated" >&2
       return 1
       ;;
   esac
