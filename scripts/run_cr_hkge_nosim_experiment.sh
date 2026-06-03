@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODEL_DIR="$ROOT_DIR/Model"
+LOG_DIR="$ROOT_DIR/nosim_experiment/logs"
+DATASET="dataset-aromatique-cr-hkge-nosim-ready"
+
+mkdir -p "$LOG_DIR"
+
+python "$ROOT_DIR/scripts/build_aromatique_dataset_variants.py"
+
+COMMON_ARGS=(
+  --model_type cr_hkge
+  --data_path ../
+  --dataset "$DATASET"
+  --alg_type bi
+  --adj_type si
+  --adj_uni_type sum
+  --regs '[1e-5,1e-5]'
+  --layer_size '[64,32,16]'
+  --embed_size 64
+  --kge_size 64
+  --lr 0.0001
+  --batch_size 64
+  --mess_dropout '[0.1,0.1,0.1]'
+  --node_dropout '[0.1]'
+  --Ks '[3,5,10]'
+  --epoch 100
+  --save_flag 1
+  --cr_best_metric ndcg
+  --cr_best_k 3
+)
+
+variant_args() {
+  case "$1" in
+    nosim_alpha_0_5)
+      echo "--cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5"
+      ;;
+    nosim_alpha_1_0)
+      echo "--cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 1.0"
+      ;;
+    nosim_gated)
+      echo "--cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 1 --cr_cross_ref_gate_init -2.0"
+      ;;
+    *)
+      echo "unknown variant: $1" >&2
+      echo "available: nosim_alpha_0_5 nosim_alpha_1_0 nosim_gated" >&2
+      return 1
+      ;;
+  esac
+}
+
+run_variant() {
+  local variant="$1"
+  local weights_path="../nosim_experiment/${variant}/"
+  local train_log="$LOG_DIR/${variant}_train.log"
+  local eval_log="$LOG_DIR/${variant}_subset_eval.log"
+
+  read -r -a extra_args <<< "$(variant_args "$variant")"
+
+  echo "==> Training CR-HKGE no-semsim: $variant"
+  (
+    cd "$MODEL_DIR"
+    python Main.py \
+      --weights_path "$weights_path" \
+      "${COMMON_ARGS[@]}" \
+      "${extra_args[@]}"
+  ) 2>&1 | tee "$train_log"
+
+  echo "==> Evaluating CR-HKGE no-semsim: $variant"
+  (
+    cd "$MODEL_DIR"
+    python evaluate_item_subsets.py \
+      --weights_path "$weights_path" \
+      "${COMMON_ARGS[@]}" \
+      "${extra_args[@]}" \
+      --cr_subset_data_path ../ \
+      --cr_subset_dataset dataset-aromatique-kgat-ready
+  ) 2>&1 | tee "$eval_log"
+
+  echo "==> Finished $variant"
+  echo "train_log=$train_log"
+  echo "eval_log=$eval_log"
+}
+
+if [ "$#" -eq 0 ]; then
+  variants=(nosim_alpha_0_5 nosim_alpha_1_0 nosim_gated)
+else
+  variants=("$@")
+fi
+
+for variant in "${variants[@]}"; do
+  run_variant "$variant"
+done

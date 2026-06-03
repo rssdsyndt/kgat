@@ -11,6 +11,8 @@ comparisons:
   local product attributes + sem_similar, no cross-reference relations.
 - dataset-aromatique-attribute-kgat-ready:
   local product attributes only, no cross-reference and no sem_similar.
+- dataset-aromatique-cr-hkge-nosim-ready:
+  local product attributes + cross-reference relations, no sem_similar.
 
 Entity IDs and train/test item IDs are preserved, so checkpoints can still be
 evaluated against enriched/standard item subsets derived from the full dataset.
@@ -37,6 +39,14 @@ VARIANTS = {
         "has_accord",
         "has_visual_note",
         "belongs_to_family",
+    ],
+    "dataset-aromatique-cr-hkge-nosim-ready": [
+        "inspired_by",
+        "has_accord",
+        "has_visual_note",
+        "belongs_to_family",
+        "has_global_accord",
+        "belongs_to_global_family",
     ],
 }
 
