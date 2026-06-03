@@ -270,6 +270,7 @@ class KGAT_loader(Data):
 
         product_global_rows, product_global_cols = [], []
         global_attr_edges = collections.defaultdict(lambda: ([], []))
+        global_attr_attention_edges = []
         product_to_global_ref = collections.defaultdict(list)
         global_ref_to_attributes = collections.defaultdict(list)
         enriched_product_ids = set()
@@ -293,6 +294,8 @@ class KGAT_loader(Data):
                 rows, cols = global_attr_edges[relation]
                 rows.append(head_node)
                 cols.append(tail_node)
+                global_attr_attention_edges.append(
+                    (head_node, relation + 1, tail_node))
                 global_ref_to_attributes[head].append((relation, tail))
 
         product_global_mat = self._row_normalize_sparse(
@@ -308,6 +311,24 @@ class KGAT_loader(Data):
         for product_id in enriched_product_ids:
             product_mask[self.n_users + product_id, 0] = 1.0
 
+        global_attr_attention_edges = sorted(
+            set(global_attr_attention_edges),
+            key=lambda edge: (edge[0], edge[2], edge[1]))
+        if global_attr_attention_edges:
+            global_attr_attention_heads = np.asarray(
+                [edge[0] for edge in global_attr_attention_edges],
+                dtype=np.int32)
+            global_attr_attention_relations = np.asarray(
+                [edge[1] for edge in global_attr_attention_edges],
+                dtype=np.int32)
+            global_attr_attention_tails = np.asarray(
+                [edge[2] for edge in global_attr_attention_edges],
+                dtype=np.int32)
+        else:
+            global_attr_attention_heads = np.asarray([], dtype=np.int32)
+            global_attr_attention_relations = np.asarray([], dtype=np.int32)
+            global_attr_attention_tails = np.asarray([], dtype=np.int32)
+
         print('\tCR-HKGE metadata: enriched_products=%d, product_global_edges=%d, global_attr_relations=%d.' %
               (len(enriched_product_ids), len(product_global_rows), len(global_attr_relation_mats)))
 
@@ -322,6 +343,9 @@ class KGAT_loader(Data):
             'global_attr_relation_ids': global_attr_relation_ids,
             'product_global_mat': product_global_mat,
             'global_attr_relation_mats': global_attr_relation_mats,
+            'global_attr_attention_heads': global_attr_attention_heads,
+            'global_attr_attention_relations': global_attr_attention_relations,
+            'global_attr_attention_tails': global_attr_attention_tails,
             'product_mask': product_mask,
             'enriched_product_ids': sorted(enriched_product_ids),
             'product_to_global_ref': {k: sorted(v) for k, v in product_to_global_ref.items()},

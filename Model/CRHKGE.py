@@ -22,6 +22,7 @@ class CRHKGE(KGAT):
         self.cr_use_relation_weight = bool(int(getattr(args, 'cr_use_relation_weight', 1)))
         self.cr_use_cross_ref = bool(int(getattr(args, 'cr_use_cross_ref', 1)))
         self.cr_relation_weight_mode = getattr(args, 'cr_relation_weight_mode', 'semantic')
+        self.cr_relation_aware_message = bool(int(getattr(args, 'cr_relation_aware_message', 1)))
         self.cr_cross_ref_alpha = float(getattr(args, 'cr_cross_ref_alpha', 1.0))
         self.cr_model_version = getattr(args, 'cr_model_version', 'cr_hkge_v1')
 
@@ -73,14 +74,16 @@ class CRHKGE(KGAT):
             self.cr_relation_type_probs = tf.nn.softmax(
                 all_weights['cr_relation_type_logits'],
                 name='cr_relation_type_probs')
-            # Preserve KGAT's initial score scale while retaining softmax-based
-            # relative relation weighting.
-            self.cr_relation_type_multipliers = self.cr_relation_type_probs * float(self.cr_n_relation_types)
+            self.cr_relation_type_multipliers = self.cr_relation_type_probs
         else:
             self.cr_relation_type_probs = None
             self.cr_relation_type_multipliers = None
 
         if self.cr_use_cross_ref:
+            # KGAT assigns self.weights after _build_weights returns. CR-HKGE
+            # needs relation embeddings while building strict cross-reference
+            # attention, so expose the in-progress dictionary early.
+            self.weights = all_weights
             for k in range(self.n_layers):
                 current_dim = self.weight_size_list[k]
                 all_weights['W_cr_%d' % k] = tf.Variable(
@@ -96,6 +99,15 @@ class CRHKGE(KGAT):
         product_global_mat = self.cr_config.get('product_global_mat')
         product_mask = self.cr_config.get('product_mask')
         global_attr_relation_mats = self.cr_config.get('global_attr_relation_mats', [])
+        global_attr_heads = np.asarray(
+            self.cr_config.get('global_attr_attention_heads', []),
+            dtype=np.int32)
+        global_attr_relations = np.asarray(
+            self.cr_config.get('global_attr_attention_relations', []),
+            dtype=np.int32)
+        global_attr_tails = np.asarray(
+            self.cr_config.get('global_attr_attention_tails', []),
+            dtype=np.int32)
 
         n_nodes = self.n_users + self.n_entities
 
@@ -112,6 +124,31 @@ class CRHKGE(KGAT):
             (int(relation_id), self._convert_sp_mat_to_sp_tensor(mat))
             for relation_id, mat in global_attr_relation_mats
         ]
+        self.cr_global_attr_attention_tensor = None
+        self.cr_global_attr_attention_edge_count = int(len(global_attr_heads))
+
+        if (len(global_attr_heads) > 0 and
+                len(global_attr_heads) == len(global_attr_relations) == len(global_attr_tails)):
+            self.cr_global_attr_attention_h = tf.constant(global_attr_heads, dtype=tf.int32)
+            self.cr_global_attr_attention_r = tf.constant(global_attr_relations, dtype=tf.int32)
+            self.cr_global_attr_attention_t = tf.constant(global_attr_tails, dtype=tf.int32)
+
+            indices = np.column_stack((global_attr_heads, global_attr_tails)).astype(np.int64)
+            self.cr_global_attr_attention_indices = tf.constant(indices, dtype=tf.int64)
+            self.cr_global_attr_attention_shape = np.asarray([n_nodes, n_nodes], dtype=np.int64)
+            self.cr_global_attr_attention_tensor = self._create_global_attr_attention_tensor()
+
+    def _create_global_attr_attention_tensor(self):
+        scores = self._generate_transE_score(
+            self.cr_global_attr_attention_h,
+            self.cr_global_attr_attention_t,
+            self.cr_global_attr_attention_r)
+
+        attention_input = tf.SparseTensor(
+            self.cr_global_attr_attention_indices,
+            scores,
+            self.cr_global_attr_attention_shape)
+        return tf.sparse.softmax(attention_input)
 
     def _relation_multiplier_for_r(self, r):
         if not self.cr_use_relation_weight:
@@ -196,6 +233,9 @@ class CRHKGE(KGAT):
         if not self.cr_use_relation_weight:
             return None
 
+        if not self.cr_relation_aware_message:
+            return None
+
         if self.cr_lap_list is None or self.cr_adj_r_list is None:
             return None
 
@@ -219,12 +259,16 @@ class CRHKGE(KGAT):
         return tf.add_n(relation_messages)
 
     def _create_cross_reference_context(self, ego_embeddings, layer_id):
-        attr_context = tf.zeros_like(ego_embeddings)
-
-        for raw_relation_id, relation_tensor in self.cr_global_attr_relation_tensors:
-            relation_context = tf.sparse_tensor_dense_matmul(relation_tensor, ego_embeddings)
-            relation_multiplier = self._relation_multiplier_for_raw_id(raw_relation_id)
-            attr_context = attr_context + relation_context * relation_multiplier
+        if self.cr_global_attr_attention_tensor is not None:
+            attr_context = tf.sparse_tensor_dense_matmul(
+                self.cr_global_attr_attention_tensor,
+                ego_embeddings)
+        else:
+            attr_context = tf.zeros_like(ego_embeddings)
+            for raw_relation_id, relation_tensor in self.cr_global_attr_relation_tensors:
+                relation_context = tf.sparse_tensor_dense_matmul(relation_tensor, ego_embeddings)
+                relation_multiplier = self._relation_multiplier_for_raw_id(raw_relation_id)
+                attr_context = attr_context + relation_context * relation_multiplier
 
         global_reference_context = ego_embeddings + attr_context
         product_context = tf.sparse_tensor_dense_matmul(
@@ -286,6 +330,10 @@ class CRHKGE(KGAT):
             data_generator,
             entity_meta)
 
+        self._write_query_encoder_config(
+            os.path.join(artifact_dir, 'query_encoder_config.json'),
+            int(entity_embeddings.shape[1]))
+
         model_config = {
             'model_version': self.cr_model_version,
             'model_type': self.model_type,
@@ -299,9 +347,13 @@ class CRHKGE(KGAT):
             'cr_use_relation_weight': self.cr_use_relation_weight,
             'cr_use_cross_ref': self.cr_use_cross_ref,
             'cr_relation_weight_mode': self.cr_relation_weight_mode,
+            'cr_relation_aware_message': self.cr_relation_aware_message,
             'cr_cross_ref_alpha': self.cr_cross_ref_alpha,
+            'cr_cross_ref_attention': 'strict_neighbor_attention',
+            'cr_global_attr_attention_edges': int(getattr(self, 'cr_global_attr_attention_edge_count', 0)),
             'enriched_product_count': int(len(self.cr_config.get('enriched_product_ids', []))),
             'global_attr_relation_ids': [int(r) for r in self.cr_global_attr_relation_ids],
+            'query_encoder_config': 'query_encoder_config.json',
             'final_performance': final_perf,
         }
 
@@ -406,6 +458,55 @@ class CRHKGE(KGAT):
                     row['multiplier'],
                     self.cr_model_version))
 
+    def _write_query_encoder_config(self, path, embedding_dim):
+        config = {
+            'model_version': self.cr_model_version,
+            'embedding_dim': int(embedding_dim),
+            'entity_matching': {
+                'accords': ['accord', 'global_accord'],
+                'family': ['family', 'global_family'],
+                'notes': ['note'],
+                'visual_notes': ['note'],
+                'reference': ['global_ref'],
+                'inspired_by': ['global_ref'],
+            },
+            'field_relation_map': {
+                'accords': {
+                    'accord': 'has_accord',
+                    'global_accord': 'has_global_accord',
+                },
+                'family': {
+                    'family': 'belongs_to_family',
+                    'global_family': 'belongs_to_global_family',
+                },
+                'notes': {
+                    'note': 'has_visual_note',
+                },
+                'visual_notes': {
+                    'note': 'has_visual_note',
+                },
+                'reference': {
+                    'global_ref': 'inspired_by',
+                },
+                'inspired_by': {
+                    'global_ref': 'inspired_by',
+                },
+            },
+            'relation_weights_used': bool(self.cr_use_relation_weight),
+            'relation_weight_mode': self.cr_relation_weight_mode,
+            'relation_weight_file': 'relation_weights.tsv',
+            'product_embedding_file': 'product_embeddings.tsv',
+            'entity_embedding_file': 'entity_embeddings.tsv',
+            'kg_path_file': 'kg_paths.jsonl',
+            'aggregation': 'weighted_mean',
+            'normalization': 'l2',
+            'score_function': 'cosine',
+            'top_k': 3,
+        }
+
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+
     def _write_kg_paths(self, path, data_generator, entity_meta):
         relation_id_to_name = self.cr_config.get('relation_id_to_name', {})
         product_paths = {}
@@ -417,14 +518,47 @@ class CRHKGE(KGAT):
             if head >= self.n_items:
                 continue
 
+            head_meta = entity_meta.get(head, {})
             tail_meta = entity_meta.get(tail, {})
             product_paths.setdefault(head, []).append({
+                'head_entity_id': head,
+                'head_entity_type': head_meta.get('type', 'product'),
+                'head_entity_name': head_meta.get('name', 'entity_%d' % head),
                 'relation_id': relation,
                 'relation_name': relation_id_to_name.get(relation, 'relation_%d' % relation),
+                'relation_scope': 'product',
                 'tail_entity_id': tail,
                 'tail_entity_type': tail_meta.get('type', ''),
                 'tail_entity_name': tail_meta.get('name', 'entity_%d' % tail),
             })
+
+        product_to_global_ref = self.cr_config.get('product_to_global_ref', {})
+        global_ref_to_attributes = self.cr_config.get('global_ref_to_attributes', {})
+
+        for product_id, global_refs in product_to_global_ref.items():
+            product_id = int(product_id)
+            for global_ref_id in global_refs:
+                global_ref_id = int(global_ref_id)
+                attrs = global_ref_to_attributes.get(global_ref_id)
+                if attrs is None:
+                    attrs = global_ref_to_attributes.get(str(global_ref_id), [])
+
+                head_meta = entity_meta.get(global_ref_id, {})
+                for relation, tail in attrs:
+                    relation = int(relation)
+                    tail = int(tail)
+                    tail_meta = entity_meta.get(tail, {})
+                    product_paths.setdefault(product_id, []).append({
+                        'head_entity_id': global_ref_id,
+                        'head_entity_type': head_meta.get('type', 'global_ref'),
+                        'head_entity_name': head_meta.get('name', 'entity_%d' % global_ref_id),
+                        'relation_id': relation,
+                        'relation_name': relation_id_to_name.get(relation, 'relation_%d' % relation),
+                        'relation_scope': 'global_reference',
+                        'tail_entity_id': tail,
+                        'tail_entity_type': tail_meta.get('type', ''),
+                        'tail_entity_name': tail_meta.get('name', 'entity_%d' % tail),
+                    })
 
         with open(path, 'w', encoding='utf-8') as f:
             for product_id in sorted(product_paths.keys()):

@@ -84,6 +84,8 @@ def parse_args():
                         help='CR-HKGE only. 1: use cross-reference propagation, 0: disable.')
     parser.add_argument('--cr_relation_weight_mode', nargs='?', default='semantic',
                         help='CR-HKGE only. semantic: tie forward/inverse KG relations, expanded: one weight per expanded relation.')
+    parser.add_argument('--cr_relation_aware_message', type=int, default=1,
+                        help='CR-HKGE only. 1: apply relation weights to neighborhood message propagation, 0: keep KGAT propagation strict.')
     parser.add_argument('--cr_cross_ref_alpha', type=float, default=1.0,
                         help='CR-HKGE only. Scalar multiplier for cross-reference context.')
     parser.add_argument('--cr_export_embeddings', type=int, default=0,
