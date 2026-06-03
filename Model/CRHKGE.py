@@ -23,6 +23,7 @@ class CRHKGE(KGAT):
         self.cr_use_cross_ref = bool(int(getattr(args, 'cr_use_cross_ref', 1)))
         self.cr_relation_weight_mode = getattr(args, 'cr_relation_weight_mode', 'semantic')
         self.cr_relation_aware_message = bool(int(getattr(args, 'cr_relation_aware_message', 1)))
+        self.cr_relation_message_scale = getattr(args, 'cr_relation_message_scale', 'type_count')
         self.cr_cross_ref_alpha = float(getattr(args, 'cr_cross_ref_alpha', 1.0))
         self.cr_model_version = getattr(args, 'cr_model_version', 'cr_hkge_v1')
 
@@ -75,9 +76,18 @@ class CRHKGE(KGAT):
                 all_weights['cr_relation_type_logits'],
                 name='cr_relation_type_probs')
             self.cr_relation_type_multipliers = self.cr_relation_type_probs
+            if self.cr_relation_message_scale == 'type_count':
+                self.cr_relation_type_message_multipliers = (
+                    self.cr_relation_type_probs * float(self.cr_n_relation_types))
+            elif self.cr_relation_message_scale == 'probability':
+                self.cr_relation_type_message_multipliers = self.cr_relation_type_probs
+            else:
+                raise ValueError('unsupported cr_relation_message_scale: %s' %
+                                 self.cr_relation_message_scale)
         else:
             self.cr_relation_type_probs = None
             self.cr_relation_type_multipliers = None
+            self.cr_relation_type_message_multipliers = None
 
         if self.cr_use_cross_ref:
             # KGAT assigns self.weights after _build_weights returns. CR-HKGE
@@ -164,6 +174,13 @@ class CRHKGE(KGAT):
 
         relation_type_id = int(self.cr_relation_type_ids[int(expanded_relation_id)])
         return tf.gather(self.cr_relation_type_multipliers, relation_type_id)
+
+    def _relation_message_multiplier_for_expanded_id(self, expanded_relation_id):
+        if not self.cr_use_relation_weight:
+            return tf.constant(1.0, dtype=tf.float32)
+
+        relation_type_id = int(self.cr_relation_type_ids[int(expanded_relation_id)])
+        return tf.gather(self.cr_relation_type_message_multipliers, relation_type_id)
 
     def _relation_multiplier_for_raw_id(self, raw_relation_id):
         expanded_relation_id = int(raw_relation_id) + 1
@@ -253,7 +270,7 @@ class CRHKGE(KGAT):
                 temp_embed.append(tf.sparse_tensor_dense_matmul(A_fold_hat[f], ego_embeddings))
 
             relation_embedding = tf.concat(temp_embed, 0)
-            relation_multiplier = self._relation_multiplier_for_expanded_id(relation_id)
+            relation_multiplier = self._relation_message_multiplier_for_expanded_id(relation_id)
             relation_messages.append(relation_embedding * relation_multiplier)
 
         return tf.add_n(relation_messages)
@@ -348,7 +365,11 @@ class CRHKGE(KGAT):
             'cr_use_cross_ref': self.cr_use_cross_ref,
             'cr_relation_weight_mode': self.cr_relation_weight_mode,
             'cr_relation_aware_message': self.cr_relation_aware_message,
+            'cr_relation_message_scale': self.cr_relation_message_scale,
             'cr_cross_ref_alpha': self.cr_cross_ref_alpha,
+            'cr_best_metric': getattr(args, 'cr_best_metric', 'ndcg'),
+            'cr_best_k': int(getattr(args, 'cr_best_k', 3)),
+            'cr_export_best_checkpoint': bool(int(getattr(args, 'cr_export_best_checkpoint', 1))),
             'cr_cross_ref_attention': 'strict_neighbor_attention',
             'cr_global_attr_attention_edges': int(getattr(self, 'cr_global_attr_attention_edge_count', 0)),
             'enriched_product_count': int(len(self.cr_config.get('enriched_product_ids', []))),
@@ -365,13 +386,15 @@ class CRHKGE(KGAT):
 
     def _relation_weight_rows(self, sess):
         if self.cr_use_relation_weight:
-            probs, multipliers = sess.run([
+            probs, multipliers, message_multipliers = sess.run([
                 self.cr_relation_type_probs,
-                self.cr_relation_type_multipliers
+                self.cr_relation_type_multipliers,
+                self.cr_relation_type_message_multipliers
             ])
         else:
             probs = np.ones(self.cr_n_relation_types, dtype=np.float32) / float(self.cr_n_relation_types)
             multipliers = np.ones(self.cr_n_relation_types, dtype=np.float32)
+            message_multipliers = np.ones(self.cr_n_relation_types, dtype=np.float32)
 
         rows = []
         for type_id, type_name in enumerate(self.cr_relation_type_names):
@@ -380,6 +403,7 @@ class CRHKGE(KGAT):
                 'relation_type_name': type_name,
                 'probability': float(probs[type_id]),
                 'multiplier': float(multipliers[type_id]),
+                'message_multiplier': float(message_multipliers[type_id]),
             })
         return rows
 
@@ -449,13 +473,14 @@ class CRHKGE(KGAT):
 
     def _write_relation_weights(self, path, rows):
         with open(path, 'w', encoding='utf-8') as f:
-            f.write('relation_type_id\trelation_type_name\tprobability\tmultiplier\tmodel_version\n')
+            f.write('relation_type_id\trelation_type_name\tprobability\tmultiplier\tmessage_multiplier\tmodel_version\n')
             for row in rows:
-                f.write('%d\t%s\t%.8f\t%.8f\t%s\n' % (
+                f.write('%d\t%s\t%.8f\t%.8f\t%.8f\t%s\n' % (
                     row['relation_type_id'],
                     row['relation_type_name'],
                     row['probability'],
                     row['multiplier'],
+                    row['message_multiplier'],
                     self.cr_model_version))
 
     def _write_query_encoder_config(self, path, embedding_dim):

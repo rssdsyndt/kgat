@@ -38,6 +38,29 @@ def _scalar(x):
     return float(np.asarray(x).reshape(-1)[0])
 
 
+def _metric_key(metric):
+    metric = str(metric).lower()
+    if metric in ['hit', 'hit_ratio', 'hr']:
+        return 'hit_ratio'
+    if metric in ['recall', 'precision', 'ndcg']:
+        return metric
+    raise ValueError('unsupported metric: %s' % metric)
+
+
+def _metric_index_for_k(k_values, target_k):
+    if target_k in k_values:
+        return k_values.index(target_k)
+    print('warning: requested K=%d is not in Ks=%s; using K=%d.' %
+          (target_k, k_values, k_values[0]))
+    return 0
+
+
+def _metric_value(ret, metric, target_k, k_values):
+    metric_key = _metric_key(metric)
+    metric_idx = _metric_index_for_k(k_values, target_k)
+    return float(ret[metric_key][metric_idx])
+
+
 if __name__ == '__main__':
     # get argument settings.
     tf.set_random_seed(2019)
@@ -242,6 +265,11 @@ if __name__ == '__main__':
     should_stop = False
 
     show_step = 10
+    k_values = eval(args.Ks)
+    cr_best_metric = getattr(args, 'cr_best_metric', 'ndcg')
+    cr_best_k = int(getattr(args, 'cr_best_k', 3))
+    cr_best_score = -np.inf
+    cr_best_epoch = None
 
     for epoch in range(args.epoch):
         t1 = time()
@@ -337,19 +365,29 @@ if __name__ == '__main__':
                         ret['ndcg'][0], ret['ndcg'][-1])
             print(perf_str)
 
+        if args.model_type == 'cr_hkge':
+            cur_cr_score = _metric_value(ret, cr_best_metric, cr_best_k, k_values)
+            if cur_cr_score > cr_best_score:
+                cr_best_score = cur_cr_score
+                cr_best_epoch = epoch
+                if args.save_flag == 1:
+                    save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
+                    print('save CR-HKGE best %s@%d=%.5f checkpoint in path: %s' %
+                          (cr_best_metric, cr_best_k, cr_best_score, weights_save_path))
+
         cur_best_pre_0, stopping_step, should_stop = early_stopping(ret['recall'][0], cur_best_pre_0,
                                                                     stopping_step, expected_order='acc', flag_step=10)
+
+        # *********************************************************
+        # save the user & item embeddings for pretraining.
+        if args.model_type != 'cr_hkge' and ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
+            save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
+            print('save the weights in path: ', weights_save_path)
 
         # *********************************************************
         # early stopping when cur_best_pre_0 is decreasing for ten successive steps.
         if should_stop == True:
             break
-
-        # *********************************************************
-        # save the user & item embeddings for pretraining.
-        if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
-            save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
-            print('save the weights in path: ', weights_save_path)
 
     if len(rec_loger) == 0:
         users_to_test = list(data_generator.test_user_dict.keys())
@@ -373,11 +411,25 @@ if __name__ == '__main__':
     ndcgs = np.array(ndcg_loger)
     hit = np.array(hit_loger)
 
-    best_rec_0 = max(recs[:, 0])
-    idx = list(recs[:, 0]).index(best_rec_0)
+    if args.model_type == 'cr_hkge':
+        metric_key = _metric_key(cr_best_metric)
+        metric_idx = _metric_index_for_k(k_values, cr_best_k)
+        metric_log = {
+            'recall': recs,
+            'precision': pres,
+            'hit_ratio': hit,
+            'ndcg': ndcgs,
+        }[metric_key]
+        metric_scores = metric_log[:, metric_idx]
+        idx = int(np.argmax(metric_scores))
+        best_metric_label = '%s@%d=%.5f' % (cr_best_metric, cr_best_k, metric_scores[idx])
+    else:
+        best_rec_0 = max(recs[:, 0])
+        idx = list(recs[:, 0]).index(best_rec_0)
+        best_metric_label = 'recall@%d=%.5f' % (k_values[0], recs[idx][0])
 
-    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
-                 (idx, time() - t0, '\t'.join(['%.5f' % r for r in recs[idx]]),
+    final_perf = "Best Iter=[%d]@[%.1f]\tbest_metric=%s, recall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
+                 (idx, time() - t0, best_metric_label, '\t'.join(['%.5f' % r for r in recs[idx]]),
                   '\t'.join(['%.5f' % r for r in pres[idx]]),
                   '\t'.join(['%.5f' % r for r in hit[idx]]),
                   '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
@@ -392,4 +444,12 @@ if __name__ == '__main__':
     f.close()
 
     if hasattr(model, 'export_artifacts') and int(getattr(args, 'cr_export_embeddings', 0)) == 1:
+        if (args.model_type == 'cr_hkge' and args.save_flag == 1 and
+                int(getattr(args, 'cr_export_best_checkpoint', 1)) == 1):
+            ckpt = tf.train.get_checkpoint_state(weights_save_path)
+            if ckpt and ckpt.model_checkpoint_path:
+                save_saver.restore(sess, ckpt.model_checkpoint_path)
+                print('restore CR-HKGE best checkpoint for artifact export: ', ckpt.model_checkpoint_path)
+            else:
+                print('warning: no CR-HKGE checkpoint found; exporting current session parameters.')
         model.export_artifacts(sess, args, data_generator, final_perf)

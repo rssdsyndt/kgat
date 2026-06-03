@@ -180,29 +180,85 @@ class CRHKGERetriever:
             index.setdefault(key, []).append(entity)
         return index
 
-    def recommend(self, query: dict[str, Any], top_k: int | None = None) -> dict[str, Any]:
+    def recommend(
+        self,
+        query: dict[str, Any],
+        top_k: int | None = None,
+        candidate_pool: int = 50,
+        min_matched_paths: int = 1,
+        match_bonus: float = 0.05,
+        query_aware_rerank: bool = True,
+    ) -> dict[str, Any]:
         matched_entities, unmatched_terms = self.match_query_entities(query)
         query_vector = self.build_query_vector(matched_entities)
         scores = [dot(product_vector, query_vector) for product_vector in self.product_matrix]
 
         k = int(top_k or self.config.get("top_k", 3))
-        top_indices = sorted(range(len(scores)), key=lambda idx: scores[idx], reverse=True)[:k]
-        recommendations = []
-        for rank, product_index in enumerate(top_indices, start=1):
+        pool_size = max(k, min(candidate_pool, len(scores)))
+        candidate_indices = sorted(range(len(scores)), key=lambda idx: scores[idx], reverse=True)[:pool_size]
+
+        candidates = []
+        for product_index in candidate_indices:
             product = self.products[int(product_index)]
             product_id = int(product["entity_id"])
+            kg_path = self.build_kg_path(product_id, matched_entities)
+            matched_path_count = sum(1 for path in kg_path if path.get("matched") is True)
+            raw_cosine = scores[product_index]
+            rerank_score = raw_cosine + (match_bonus * min(matched_path_count, 3))
+            candidates.append({
+                "product": product,
+                "product_index": product_index,
+                "product_id": product_id,
+                "raw_cosine": raw_cosine,
+                "rerank_score": rerank_score,
+                "matched_path_count": matched_path_count,
+                "kg_path": kg_path,
+            })
+
+        if query_aware_rerank:
+            matched_candidates = [
+                item for item in candidates
+                if item["matched_path_count"] >= min_matched_paths
+            ]
+            fallback_candidates = [
+                item for item in candidates
+                if item["matched_path_count"] < min_matched_paths
+            ]
+            matched_candidates.sort(
+                key=lambda item: (item["rerank_score"], item["raw_cosine"]),
+                reverse=True)
+            fallback_candidates.sort(
+                key=lambda item: item["raw_cosine"],
+                reverse=True)
+            selected_candidates = (matched_candidates + fallback_candidates)[:k]
+        else:
+            selected_candidates = candidates[:k]
+
+        recommendations = []
+        for rank, item in enumerate(selected_candidates, start=1):
+            product = item["product"]
             recommendations.append({
                 "rank": rank,
-                "product_id": str(product_id),
+                "product_id": str(item["product_id"]),
                 "product_name": product["entity_name"],
-                "match_score": round(clamp((scores[product_index] + 1.0) * 50.0, 0.0, 100.0), 2),
-                "raw_cosine": round(scores[product_index], 6),
-                "kg_path": self.build_kg_path(product_id, matched_entities),
+                "match_score": round(clamp((item["raw_cosine"] + 1.0) * 50.0, 0.0, 100.0), 2),
+                "raw_cosine": round(item["raw_cosine"], 6),
+                "ranking_score": round(item["rerank_score"], 6),
+                "matched_path_count": int(item["matched_path_count"]),
+                "kg_path": item["kg_path"],
                 "model_version": product.get("model_version", ""),
             })
 
         return {
             "query_vector_dim": len(query_vector),
+            "retrieval_config": {
+                "score_function": "cosine",
+                "query_aware_rerank": bool(query_aware_rerank),
+                "candidate_pool": int(pool_size),
+                "min_matched_paths": int(min_matched_paths),
+                "match_bonus": float(match_bonus),
+                "top_k": int(k),
+            },
             "matched_entities": [
                 {
                     "text": item["text"],
@@ -377,10 +433,20 @@ def main() -> int:
     parser.add_argument("--query-json", default="")
     parser.add_argument("--query-file", default="")
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument("--candidate-pool", type=int, default=50)
+    parser.add_argument("--min-matched-paths", type=int, default=1)
+    parser.add_argument("--match-bonus", type=float, default=0.05)
+    parser.add_argument("--no-query-aware-rerank", action="store_true")
     args = parser.parse_args()
 
     retriever = CRHKGERetriever(args.artifact_path)
-    result = retriever.recommend(load_query(args), top_k=args.top_k)
+    result = retriever.recommend(
+        load_query(args),
+        top_k=args.top_k,
+        candidate_pool=args.candidate_pool,
+        min_matched_paths=args.min_matched_paths,
+        match_bonus=args.match_bonus,
+        query_aware_rerank=not args.no_query_aware_rerank)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

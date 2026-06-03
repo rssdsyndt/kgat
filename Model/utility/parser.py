@@ -86,8 +86,16 @@ def parse_args():
                         help='CR-HKGE only. semantic: tie forward/inverse KG relations, expanded: one weight per expanded relation.')
     parser.add_argument('--cr_relation_aware_message', type=int, default=1,
                         help='CR-HKGE only. 1: apply relation weights to neighborhood message propagation, 0: keep KGAT propagation strict.')
+    parser.add_argument('--cr_relation_message_scale', nargs='?', default='type_count',
+                        help='CR-HKGE only. probability: use softmax lambda directly for messages; type_count: multiply by number of relation types to preserve KGAT message scale.')
     parser.add_argument('--cr_cross_ref_alpha', type=float, default=1.0,
                         help='CR-HKGE only. Scalar multiplier for cross-reference context.')
+    parser.add_argument('--cr_best_metric', nargs='?', default='ndcg',
+                        help='CR-HKGE only. Metric used to save/export the best checkpoint: recall, precision, hit, or ndcg.')
+    parser.add_argument('--cr_best_k', type=int, default=3,
+                        help='CR-HKGE only. K value used with --cr_best_metric, e.g. 3 for NDCG@3.')
+    parser.add_argument('--cr_export_best_checkpoint', type=int, default=1,
+                        help='CR-HKGE only. 1: restore best saved checkpoint before artifact export when save_flag=1.')
     parser.add_argument('--cr_export_embeddings', type=int, default=0,
                         help='CR-HKGE only. 1: export product/entity embeddings and relation weights after training.')
     parser.add_argument('--cr_artifact_path', nargs='?', default='../artifacts/cr_hkge',
