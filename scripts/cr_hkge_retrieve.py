@@ -33,6 +33,15 @@ FIELD_ALIASES = {
     "inspired_by": ["inspired_by"],
 }
 
+RELATION_COMPATIBLE_ENTITY_TYPES = {
+    "has_accord": {"accord"},
+    "has_global_accord": {"global_accord"},
+    "belongs_to_family": {"family"},
+    "belongs_to_global_family": {"global_family"},
+    "has_visual_note": {"note"},
+    "inspired_by": {"global_ref"},
+}
+
 
 def normalize(value: str) -> str:
     value = unicodedata.normalize("NFKD", value)
@@ -123,6 +132,10 @@ class CRHKGERetriever:
                 "visual_notes": {"note": "has_visual_note"},
                 "reference": {"global_ref": "inspired_by"},
                 "inspired_by": {"global_ref": "inspired_by"},
+            },
+            "kg_path_matching": {
+                "policy": "relation_compatible",
+                "allow_name_match": True,
             },
             "top_k": 3,
         }
@@ -362,52 +375,74 @@ class CRHKGERetriever:
 
     def build_kg_path(self, product_id: int, matched_entities: list[dict[str, Any]], max_paths: int = 6) -> list[dict[str, Any]]:
         paths = self.kg_paths.get(product_id, [])
-        matched_ids = {int(item["entity_id"]) for item in matched_entities}
-        matched_names = {normalize(item["entity_name"]) for item in matched_entities}
 
         selected: list[dict[str, Any]] = []
 
-        def append_path(path: dict[str, Any], matched: bool) -> None:
+        def append_path(path: dict[str, Any], match_info: dict[str, Any] | None) -> None:
             if len(selected) >= max_paths:
                 return
             relation = path.get("relation_name", "")
             entity_name = path.get("tail_entity_name", "")
-            selected.append({
+            matched = match_info is not None
+            row = {
                 "relation": relation,
                 "entity": entity_name,
                 "matched": bool(matched),
                 "reason": self._path_reason(relation, entity_name, matched, path.get("relation_scope", "")),
-            })
+            }
+            if match_info is not None:
+                row["matched_query"] = {
+                    "text": match_info["text"],
+                    "entity_id": int(match_info["entity_id"]),
+                    "entity_type": match_info["entity_type"],
+                    "relation": match_info["relation"],
+                }
+            selected.append(row)
 
         for path in paths:
-            tail_id = int(path.get("tail_entity_id", -1))
-            tail_name = normalize(str(path.get("tail_entity_name", "")))
             relation = path.get("relation_name", "")
-            is_match = tail_id in matched_ids or tail_name in matched_names
-            if is_match and relation != "inspired_by":
-                append_path(path, True)
+            match_info = self._path_match_info(path, matched_entities)
+            if match_info is not None and relation != "inspired_by":
+                append_path(path, match_info)
 
         for path in paths:
             relation = path.get("relation_name", "")
             if relation != "inspired_by":
                 continue
-            tail_id = int(path.get("tail_entity_id", -1))
-            tail_name = normalize(str(path.get("tail_entity_name", "")))
-            append_path(path, tail_id in matched_ids or tail_name in matched_names)
+            append_path(path, self._path_match_info(path, matched_entities))
 
         if len(selected) < max_paths:
             for path in paths:
                 relation = path.get("relation_name", "")
-                if relation in {"has_accord", "belongs_to_family", "has_visual_note", "has_global_accord", "belongs_to_global_family"}:
-                    tail_id = int(path.get("tail_entity_id", -1))
-                    tail_name = normalize(str(path.get("tail_entity_name", "")))
-                    is_match = tail_id in matched_ids or tail_name in matched_names
-                    if not is_match:
-                        append_path(path, False)
+                if relation in RELATION_COMPATIBLE_ENTITY_TYPES:
+                    match_info = self._path_match_info(path, matched_entities)
+                    if match_info is None:
+                        append_path(path, None)
                 if len(selected) >= max_paths:
                     break
 
         return selected
+
+    def _path_match_info(self, path: dict[str, Any], matched_entities: list[dict[str, Any]]) -> dict[str, Any] | None:
+        relation = path.get("relation_name", "")
+        tail_id = int(path.get("tail_entity_id", -1))
+        tail_type = str(path.get("tail_entity_type", ""))
+        tail_name = normalize(str(path.get("tail_entity_name", "")))
+        compatible_types = RELATION_COMPATIBLE_ENTITY_TYPES.get(relation)
+
+        if compatible_types is not None and tail_type not in compatible_types:
+            return None
+
+        for item in matched_entities:
+            if item["relation"] != relation:
+                continue
+            if compatible_types is not None and item["entity_type"] not in compatible_types:
+                continue
+            if int(item["entity_id"]) == tail_id:
+                return item
+            if normalize(item["entity_name"]) == tail_name:
+                return item
+        return None
 
     def _path_reason(self, relation: str, entity_name: str, matched: bool, scope: str) -> str:
         if matched:
