@@ -108,5 +108,9 @@ def parse_args():
                         help='CR-HKGE only. Directory used for exported artifacts.')
     parser.add_argument('--cr_model_version', nargs='?', default='cr_hkge_v1',
                         help='CR-HKGE only. Version label written to exported artifacts.')
+    parser.add_argument('--cr_subset_data_path', nargs='?', default='',
+                        help='Subset evaluation only. Optional data path used to derive enriched/standard item subsets.')
+    parser.add_argument('--cr_subset_dataset', nargs='?', default='',
+                        help='Subset evaluation only. Optional dataset name used to derive enriched/standard item subsets.')
 
     return parser.parse_args()

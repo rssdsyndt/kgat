@@ -44,16 +44,28 @@ def relation_map(dataset_path: str) -> Dict[str, int]:
 
 
 def enriched_item_ids(data_generator: KGAT_loader) -> Set[int]:
-    rel_map = relation_map(data_generator.path)
+    return enriched_item_ids_from_path(data_generator.path, data_generator.n_items)
+
+
+def enriched_item_ids_from_path(dataset_path: str, n_items: int) -> Set[int]:
+    rel_map = relation_map(dataset_path)
     if "inspired_by" not in rel_map:
         raise RuntimeError("relation 'inspired_by' not found in relation2id.txt")
 
     inspired_by_id = rel_map["inspired_by"]
     enriched = set()
-    for head, relation, _tail in data_generator.kg_data:
+    kg_path = os.path.join(dataset_path, "kg_final.txt")
+    if not os.path.exists(kg_path):
+        raise RuntimeError("kg_final.txt not found in %s" % dataset_path)
+
+    kg_data = np.loadtxt(kg_path, dtype=np.int32)
+    if kg_data.ndim == 1:
+        kg_data = np.asarray([kg_data])
+
+    for head, relation, _tail in kg_data:
         head = int(head)
         relation = int(relation)
-        if head < data_generator.n_items and relation == inspired_by_id:
+        if head < n_items and relation == inspired_by_id:
             enriched.add(head)
     return enriched
 
@@ -203,7 +215,16 @@ def main():
     print("loaded checkpoint: %s" % ckpt.model_checkpoint_path)
 
     ks = eval(args.Ks)
-    enriched = enriched_item_ids(data_generator)
+    subset_data_path = getattr(args, "cr_subset_data_path", "")
+    subset_dataset = getattr(args, "cr_subset_dataset", "")
+    if subset_dataset:
+        subset_base = subset_data_path if subset_data_path else args.data_path
+        subset_path = subset_base + subset_dataset
+        enriched = enriched_item_ids_from_path(subset_path, data_generator.n_items)
+        print("subset source: %s" % subset_path)
+    else:
+        enriched = enriched_item_ids(data_generator)
+
     standard = set(range(data_generator.n_items)) - enriched
 
     print("subset definition: enriched=inspired_by products, standard=non-inspired_by products")
