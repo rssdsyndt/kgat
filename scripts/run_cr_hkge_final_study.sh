@@ -50,6 +50,24 @@ model_args() {
       # fragrance prior, relation-aware message, dan cross-reference.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_flow"
       ;;
+    cr_hkge_final_alpha_0_25)
+      # Kandidat final: semua novelty tetap aktif, tetapi kekuatan
+      # cross-reference diturunkan. Dipakai ketika inspired_by membantu recall
+      # awal namun terlalu kuat menggeser ranking dari sinyal accord/family.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.25 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_25"
+      ;;
+    cr_hkge_final_alpha_0_1)
+      # Kandidat final: semua novelty tetap aktif dengan cross-reference sangat
+      # konservatif. Tujuannya menjaga manfaat inspired_by tanpa mengalahkan
+      # neighborhood KG utama.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.1 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_1"
+      ;;
+    cr_hkge_final_gated)
+      # Kandidat final: semua novelty tetap aktif, tetapi kontribusi
+      # cross-reference dikontrol oleh gate trainable. Init -2.0 berarti
+      # kontribusi awal inspired_by kecil lalu dapat naik jika memang berguna.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 1 --cr_cross_ref_gate_init -2.0 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_gated"
+      ;;
     A_no_cross_reference)
       # Ablation: menghapus Novelty cross-reference via inspired_by.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 0 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_best_metric ndcg --cr_best_k 3"
