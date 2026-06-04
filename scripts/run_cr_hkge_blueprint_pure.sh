@@ -21,3 +21,7 @@ python scripts/cr_hkge_retrieve.py \
   --artifact-path "$ARTIFACT" \
   --query-json '{"accords":["vanilla","sweet","amber"],"family":"AMBER","occasion":"evening"}' \
   --top-k 3
+
+python scripts/evaluate_cr_hkge_pure_queries.py \
+  --artifact-path "$ARTIFACT" \
+  --ks '[3,5,10]'
