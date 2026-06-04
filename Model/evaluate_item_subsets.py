@@ -21,9 +21,17 @@ import numpy as np
 
 from utility.tf_compat import tf
 from utility.parser import parse_args
+from utility.loader_bprmf import BPRMF_loader
+from utility.loader_cke import CKE_loader
+from utility.loader_cfkg import CFKG_loader
+from utility.loader_nfm import NFM_loader
 from utility.loader_kgat import KGAT_loader
 import utility.metrics as metrics
 
+from BPRMF import BPRMF
+from CKE import CKE
+from CFKG import CFKG
+from NFM import NFM
 from KGAT import KGAT
 from CRHKGE import CRHKGE
 
@@ -70,18 +78,38 @@ def enriched_item_ids_from_path(dataset_path: str, n_items: int) -> Set[int]:
     return enriched
 
 
+def build_loader(args):
+    path = args.data_path + args.dataset
+    if args.model_type == "bprmf":
+        return BPRMF_loader(args=args, path=path)
+    if args.model_type == "cke":
+        return CKE_loader(args=args, path=path)
+    if args.model_type == "cfkg":
+        return CFKG_loader(args=args, path=path)
+    if args.model_type in ["fm", "nfm"]:
+        return NFM_loader(args=args, path=path)
+    if args.model_type in ["kgat", "cr_hkge"]:
+        return KGAT_loader(args=args, path=path)
+    raise NotImplementedError("unsupported model_type for subset evaluation: %s" % args.model_type)
+
+
 def build_config(args, data_generator):
     config = {
         "n_users": data_generator.n_users,
         "n_items": data_generator.n_items,
-        "n_relations": data_generator.n_relations,
-        "n_entities": data_generator.n_entities,
-        "A_in": sum(data_generator.lap_list),
-        "all_h_list": data_generator.all_h_list,
-        "all_r_list": data_generator.all_r_list,
-        "all_t_list": data_generator.all_t_list,
-        "all_v_list": data_generator.all_v_list,
     }
+
+    if hasattr(data_generator, "n_entities"):
+        config["n_entities"] = data_generator.n_entities
+    if hasattr(data_generator, "n_relations"):
+        config["n_relations"] = data_generator.n_relations
+
+    if args.model_type in ["kgat", "cr_hkge", "cfkg"]:
+        config["A_in"] = sum(data_generator.lap_list)
+        config["all_h_list"] = data_generator.all_h_list
+        config["all_r_list"] = data_generator.all_r_list
+        config["all_t_list"] = data_generator.all_t_list
+        config["all_v_list"] = data_generator.all_v_list
 
     if args.model_type == "cr_hkge":
         config["cr_hkge_config"] = data_generator.get_cr_hkge_config()
@@ -92,6 +120,14 @@ def build_config(args, data_generator):
 
 
 def build_model(args, config):
+    if args.model_type == "bprmf":
+        return BPRMF(data_config=config, pretrain_data=None, args=args)
+    if args.model_type == "cke":
+        return CKE(data_config=config, pretrain_data=None, args=args)
+    if args.model_type == "cfkg":
+        return CFKG(data_config=config, pretrain_data=None, args=args)
+    if args.model_type in ["fm", "nfm"]:
+        return NFM(data_config=config, pretrain_data=None, args=args)
     if args.model_type == "kgat":
         return KGAT(data_config=config, pretrain_data=None, args=args)
     if args.model_type == "cr_hkge":
@@ -100,6 +136,16 @@ def build_model(args, config):
 
 
 def weights_path(args, model) -> str:
+    reg_key = "-".join([str(r) for r in eval(args.regs)])
+    if args.model_type in ["bprmf", "cke", "fm", "cfkg"]:
+        return "%sweights/%s/%s/l%s_r%s" % (
+            args.weights_path,
+            args.dataset,
+            model.model_type,
+            str(args.lr),
+            reg_key,
+        )
+
     layer = "-".join([str(l) for l in eval(args.layer_size)])
     return "%sweights/%s/%s/%s/l%s_r%s" % (
         args.weights_path,
@@ -107,7 +153,7 @@ def weights_path(args, model) -> str:
         model.model_type,
         layer,
         str(args.lr),
-        "-".join([str(r) for r in eval(args.regs)]),
+        reg_key,
     )
 
 
@@ -191,10 +237,7 @@ def main():
     np.random.seed(2019)
     args = parse_args()
 
-    if args.model_type not in ["kgat", "cr_hkge"]:
-        raise NotImplementedError("--model_type must be kgat or cr_hkge")
-
-    data_generator = KGAT_loader(args=args, path=args.data_path + args.dataset)
+    data_generator = build_loader(args)
     config = build_config(args, data_generator)
     model = build_model(args, config)
 
