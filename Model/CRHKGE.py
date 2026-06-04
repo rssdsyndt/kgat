@@ -7,18 +7,24 @@ import numpy as np
 
 
 class CRHKGE(KGAT):
-    """Cross-Reference Semantic Enrichment over KGAT.
+    """Implementasi utama CR-HKGE di atas KGAT.
 
-    The class keeps KGAT's CF/KGE training pipeline and adds two thesis
-    mechanisms: relation-type attention weights and cross-reference context
-    propagation for products connected to a global reference through
-    `inspired_by`.
+    Alur besarnya:
+    1. Tetap memakai pipeline KGAT: BPR untuk content-based positive pairs
+       dan TransR/KGE untuk knowledge graph.
+    2. Menambahkan relation-type attention agar tiap tipe relasi fragrance
+       punya bobot semantik sendiri.
+    3. Menambahkan cross-reference propagation untuk produk yang punya relasi
+       `inspired_by` ke parfum global.
     """
 
     def _parse_args(self, data_config, pretrain_data, args):
         super(CRHKGE, self)._parse_args(data_config, pretrain_data, args)
         self.model_type = self.model_type.replace('kgat_', 'cr_hkge_', 1)
 
+        # Fase konfigurasi CR-HKGE:
+        # argumen ini mengaktifkan/mematikan novelty saat final training
+        # maupun ablation study.
         self.cr_use_relation_weight = bool(int(getattr(args, 'cr_use_relation_weight', 1)))
         self.cr_use_cross_ref = bool(int(getattr(args, 'cr_use_cross_ref', 1)))
         self.cr_relation_weight_mode = getattr(args, 'cr_relation_weight_mode', 'semantic')
@@ -33,6 +39,9 @@ class CRHKGE(KGAT):
         self.cr_cross_ref_gate_init = float(getattr(args, 'cr_cross_ref_gate_init', -2.0))
         self.cr_model_version = getattr(args, 'cr_model_version', 'cr_hkge_v1')
 
+        # Metadata ini disiapkan oleh KGAT_loader khusus saat model_type=cr_hkge.
+        # Isinya mencakup mapping relasi, produk enriched, dan matriks
+        # product -> global reference untuk cross-reference propagation.
         self.cr_config = data_config.get('cr_hkge_config', {})
         self.cr_lap_list = data_config.get('lap_list', None)
         self.cr_adj_r_list = data_config.get('adj_r_list', None)
@@ -50,6 +59,9 @@ class CRHKGE(KGAT):
         ]
 
     def _resolve_relation_type_ids(self):
+        # KGAT membuat relasi forward dan inverse sebagai relation id berbeda.
+        # Pada CR-HKGE mode semantic, forward dan inverse dari relasi yang sama
+        # dikembalikan ke satu tipe semantik agar bobot relasinya konsisten.
         if self.cr_relation_weight_mode == 'semantic':
             relation_type_ids = self.cr_config.get('expanded_relation_type_ids')
             if relation_type_ids is not None and len(relation_type_ids) == self.n_relations:
@@ -75,6 +87,10 @@ class CRHKGE(KGAT):
         self.cr_n_relation_types = len(self.cr_relation_type_names)
 
         if self.cr_use_relation_weight:
+            # Novelty: relation-type specific attention.
+            # Logit ini adalah parameter learnable lambda_r untuk tiap tipe
+            # relasi fragrance. Setelah softmax, nilainya menjadi bobot relasi
+            # yang mengalikan skor attention KGAT.
             initial_logits = self._initial_relation_type_logits()
             all_weights['cr_relation_type_logits'] = tf.Variable(
                 tf.constant(initial_logits, dtype=tf.float32),
@@ -83,6 +99,8 @@ class CRHKGE(KGAT):
                 all_weights['cr_relation_type_logits'],
                 name='cr_relation_type_probs')
             if self.cr_relation_attention_scale == 'type_count':
+                # type_count menjaga skala attention KGAT: jika bobot softmax
+                # masih uniform, multiplier rata-rata menjadi 1, bukan 1/N.
                 self.cr_relation_type_multipliers = (
                     self.cr_relation_type_probs * float(self.cr_n_relation_types))
             elif self.cr_relation_attention_scale == 'probability':
@@ -105,9 +123,13 @@ class CRHKGE(KGAT):
             self.cr_relation_type_message_multipliers = None
 
         if self.cr_use_cross_ref:
-            # KGAT assigns self.weights after _build_weights returns. CR-HKGE
-            # needs relation embeddings while building strict cross-reference
-            # attention, so expose the in-progress dictionary early.
+            # Novelty: cross-reference propagation.
+            # W_cr dan b_cr adalah transformasi khusus untuk konteks global
+            # reference sebelum disuntikkan ke embedding produk lokal.
+            #
+            # KGAT baru menetapkan self.weights setelah _build_weights selesai.
+            # CR-HKGE perlu relation embedding saat membangun attention
+            # cross-reference, jadi dictionary sementara diekspos lebih awal.
             self.weights = all_weights
             for k in range(self.n_layers):
                 current_dim = self.weight_size_list[k]
@@ -140,8 +162,11 @@ class CRHKGE(KGAT):
             raise ValueError('unsupported cr_relation_prior_mode: %s' %
                              self.cr_relation_prior_mode)
 
-        # Domain priors are intentionally modest: they give fragrance-specific
-        # relations a useful starting scale while keeping the logits trainable.
+        # Prior domain fragrance:
+        # nilai awal ini memberi sinyal bahwa relasi seperti sem_similar,
+        # has_accord, belongs_to_family, dan inspired_by lebih informatif untuk
+        # rekomendasi parfum. Nilai ini hanya inisialisasi; selama training
+        # tetap dapat berubah karena logits-nya trainable.
         prior_by_name = {
             'interaction': 1.0,
             'inspired_by': 1.8,
@@ -165,6 +190,11 @@ class CRHKGE(KGAT):
         return np.log(priors) * self.cr_relation_prior_strength
 
     def _build_cross_ref_tensors(self):
+        # Fase persiapan tensor cross-reference:
+        # - product_global_mat: edge produk lokal -> parfum global reference
+        # - product_mask: penanda produk enriched yang punya inspired_by
+        # - global_attr_*: atribut milik parfum global seperti global accord
+        #   dan global family.
         product_global_mat = self.cr_config.get('product_global_mat')
         product_mask = self.cr_config.get('product_mask')
         global_attr_relation_mats = self.cr_config.get('global_attr_relation_mats', [])
@@ -208,6 +238,9 @@ class CRHKGE(KGAT):
             self.cr_global_attr_attention_tensor = self._create_global_attr_attention_tensor()
 
     def _create_global_attr_attention_tensor(self):
+        # Attention ini memilih atribut global reference yang paling relevan.
+        # Skornya memakai formula TransR/KGAT yang sudah dimodifikasi dengan
+        # relation-type multiplier CR-HKGE.
         scores = self._generate_transE_score(
             self.cr_global_attr_attention_h,
             self.cr_global_attr_attention_t,
@@ -246,6 +279,9 @@ class CRHKGE(KGAT):
         return self._relation_multiplier_for_expanded_id(expanded_relation_id)
 
     def _generate_transE_score(self, h, t, r):
+        # Fase Layer 1 + Layer 2:
+        # skor attention KGAT berbasis TransR dihitung, lalu dikalikan
+        # multiplier relation-type attention CR-HKGE.
         embeddings = tf.concat([self.weights['user_embed'], self.weights['entity_embed']], axis=0)
         embeddings = tf.expand_dims(embeddings, 1)
 
@@ -266,6 +302,10 @@ class CRHKGE(KGAT):
         if not self.cr_use_cross_ref and not self.cr_relation_aware_message:
             return super(CRHKGE, self)._create_bi_interaction_embed()
 
+        # Fase Layer 4:
+        # fungsi ini menggantikan bi-interaction KGAT ketika novelty CR-HKGE
+        # aktif. Struktur KGAT tetap dipertahankan, tetapi side embedding dapat
+        # diberi bobot relasi dan konteks cross-reference.
         A = self.A_in
         A_fold_hat = self._split_A_hat(A)
         relation_A_fold_hat = self._build_relation_aware_A_fold_hat()
@@ -275,10 +315,14 @@ class CRHKGE(KGAT):
 
         for k in range(0, self.n_layers):
             if relation_A_fold_hat is not None:
+                # Jika relation-aware message aktif, setiap adjacency per
+                # relasi dihitung terpisah lalu dikalikan bobot tipe relasi.
                 side_embeddings = self._relation_aware_side_embeddings(
                     ego_embeddings,
                     relation_A_fold_hat)
             else:
+                # Jika relation-aware message tidak aktif, fallback ke agregasi
+                # KGAT biasa memakai attentive adjacency A_in.
                 temp_embed = []
                 for f in range(self.n_fold):
                     temp_embed.append(tf.sparse_tensor_dense_matmul(A_fold_hat[f], ego_embeddings))
@@ -288,6 +332,9 @@ class CRHKGE(KGAT):
             sum_side_embeddings = side_embeddings
             bi_side_embeddings = side_embeddings
             if self.cr_use_cross_ref:
+                # Fase Layer 3:
+                # konteks global reference ditambahkan ke branch additive.
+                # Produk tanpa inspired_by mendapat konteks nol karena mask.
                 cross_ref_context = self._create_cross_reference_context(ego_embeddings, k)
                 sum_side_embeddings = side_embeddings + cross_ref_context
                 if self.cr_cross_ref_bi_interaction:
@@ -314,6 +361,9 @@ class CRHKGE(KGAT):
         return ua_embeddings, ea_embeddings
 
     def _build_relation_aware_A_fold_hat(self):
+        # Menyiapkan adjacency per relasi untuk relation-aware message.
+        # Jika dimatikan dalam ablation, fungsi ini mengembalikan None dan model
+        # kembali ke message passing KGAT standar.
         if not self.cr_use_relation_weight:
             return None
 
@@ -329,6 +379,9 @@ class CRHKGE(KGAT):
         ]
 
     def _relation_aware_side_embeddings(self, ego_embeddings, relation_A_fold_hat):
+        # Setiap relation-specific adjacency menghasilkan pesan sendiri.
+        # Pesan tersebut dikalikan multiplier lambda_r agar relasi penting
+        # memberi kontribusi lebih besar pada embedding produk.
         relation_messages = []
 
         for relation_id, A_fold_hat in relation_A_fold_hat:
@@ -343,6 +396,11 @@ class CRHKGE(KGAT):
         return tf.add_n(relation_messages)
 
     def _create_cross_reference_context(self, ego_embeddings, layer_id):
+        # Inti Novelty cross-reference:
+        # 1. Ambil konteks atribut dari global reference.
+        # 2. Alirkan konteks global reference ke produk lokal via inspired_by.
+        # 3. Transformasi dengan W_cr agar dimensinya sesuai layer KGAT.
+        # 4. Mask memastikan hanya produk enriched yang menerima konteks ini.
         if self.cr_global_attr_attention_tensor is not None:
             attr_context = tf.sparse_tensor_dense_matmul(
                 self.cr_global_attr_attention_tensor,
@@ -370,6 +428,10 @@ class CRHKGE(KGAT):
                 transformed_context * self.cr_product_mask_tensor)
 
     def export_artifacts(self, sess, args, data_generator, final_perf):
+        # Fase akhir setelah training:
+        # export artifact untuk serving/retrieval dan integrasi dengan sistem
+        # conversational. File yang dihasilkan berisi embedding produk,
+        # embedding entitas, bobot relasi, path KG, dan konfigurasi encoder.
         export_feed = {
             self.mess_dropout: [0.] * self.n_layers,
             self.node_dropout: [0.] * self.n_layers,

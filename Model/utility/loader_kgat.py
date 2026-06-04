@@ -227,9 +227,17 @@ class KGAT_loader(Data):
         return sp.coo_matrix((norm_vals, (mat.row, mat.col)), shape=(n_rows, n_cols), dtype=np.float32)
 
     def _build_cr_hkge_data(self):
+        # Fase input CR-HKGE:
+        # fungsi ini hanya dipanggil ketika model_type=cr_hkge.
+        # Tujuannya menyiapkan metadata tambahan yang tidak ada di KGAT asli,
+        # terutama mapping relasi fragrance dan struktur cross-reference.
         relation_id_to_name = self._load_relation_id_to_name()
         n_nodes = self.n_users + self.n_entities
 
+        # KGAT memperluas relasi menjadi forward dan inverse relation.
+        # Bagian ini memberi nama yang mudah dibaca untuk relation id hasil
+        # ekspansi tersebut, sehingga relation attention CR-HKGE bisa dijelaskan
+        # dalam tipe semantik seperti inspired_by atau has_accord.
         expanded_relation_names = ['unknown_relation_%d' % i for i in range(self.n_relations)]
         expanded_relation_names[0] = 'user_interacts_item'
         inverse_interaction_id = self.n_raw_relations + 1
@@ -247,6 +255,9 @@ class KGAT_loader(Data):
             if inverse_id < len(expanded_relation_names):
                 expanded_relation_names[inverse_id] = 'inverse_%s' % relation_id_to_name[raw_relation_id]
 
+        # Mapping ini mengikat forward dan inverse relation ke tipe relasi
+        # semantik yang sama. Contoh: has_accord dan inverse_has_accord sama-sama
+        # memakai bobot relation-type attention "has_accord".
         expanded_relation_type_ids = np.zeros(self.n_relations, dtype=np.int32)
         expanded_relation_type_ids[0] = 0
         if inverse_interaction_id < len(expanded_relation_type_ids):
@@ -268,6 +279,10 @@ class KGAT_loader(Data):
             if name in ['has_global_accord', 'belongs_to_global_family']
         ]
 
+        # Struktur cross-reference yang disiapkan:
+        # - product_to_global_ref: produk lokal -> parfum global reference.
+        # - global_ref_to_attributes: global reference -> global accord/family.
+        # - enriched_product_ids: produk yang punya inspired_by.
         product_global_rows, product_global_cols = [], []
         global_attr_edges = collections.defaultdict(lambda: ([], []))
         global_attr_attention_edges = []
@@ -281,6 +296,9 @@ class KGAT_loader(Data):
             tail = int(tail)
 
             if relation == inspired_by_id and head < self.n_items:
+                # Edge inspired_by adalah inti novelty cross-reference.
+                # Node produk dan node global reference digeser dengan n_users
+                # karena KGAT menyimpan user node sebelum entity node.
                 product_node = self.n_users + head
                 global_ref_node = self.n_users + tail
                 product_global_rows.append(product_node)
@@ -289,6 +307,8 @@ class KGAT_loader(Data):
                 enriched_product_ids.add(head)
 
             if relation in global_attr_relation_ids:
+                # Atribut global reference ini dipakai untuk memperkaya konteks
+                # parfum global sebelum dialirkan ke produk lokal.
                 head_node = self.n_users + head
                 tail_node = self.n_users + tail
                 rows, cols = global_attr_edges[relation]
@@ -301,6 +321,8 @@ class KGAT_loader(Data):
         product_global_mat = self._row_normalize_sparse(
             product_global_rows, product_global_cols, n_nodes, n_nodes)
 
+        # Setiap global attribute relation dibuat sebagai sparse matrix
+        # terpisah agar CR-HKGE dapat memberi bobot berbeda per tipe relasi.
         global_attr_relation_mats = []
         for relation_id in sorted(global_attr_edges.keys()):
             rows, cols = global_attr_edges[relation_id]
@@ -311,6 +333,8 @@ class KGAT_loader(Data):
         for product_id in enriched_product_ids:
             product_mask[self.n_users + product_id, 0] = 1.0
 
+        # Tensor attention global attribute dipakai oleh CRHKGE.py untuk
+        # menghitung atribut global reference yang paling relevan.
         global_attr_attention_edges = sorted(
             set(global_attr_attention_edges),
             key=lambda edge: (edge[0], edge[2], edge[1]))

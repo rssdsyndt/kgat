@@ -1,13 +1,12 @@
-"""Evaluate KGAT/CR-HKGE checkpoints on enriched vs standard item subsets.
+"""Evaluasi checkpoint untuk overall, enriched, dan standard item.
 
-The subset split is derived from the Aromatique KG:
-- enriched: products with an `inspired_by` edge.
-- standard: products without an `inspired_by` edge.
+Pembagian subset berasal dari KG Aromatique:
+- enriched: produk yang memiliki edge `inspired_by`.
+- standard: produk tanpa edge `inspired_by`.
 
-Candidates remain the full non-training catalog for each user. Only the
-relevance set is filtered per subset, which answers whether a trained model can
-rank enriched/standard relevant items highly in the same Top-K recommendation
-setting.
+Candidate item tetap seluruh katalog non-training. Yang difilter hanya item
+relevan pada test set, sehingga evaluasi menjawab apakah model mampu menaikkan
+ranking produk enriched/standard pada setting Top-K yang sama.
 """
 
 from __future__ import annotations
@@ -56,6 +55,9 @@ def enriched_item_ids(data_generator: KGAT_loader) -> Set[int]:
 
 
 def enriched_item_ids_from_path(dataset_path: str, n_items: int) -> Set[int]:
+    # Fase identifikasi produk enriched:
+    # produk disebut enriched jika memiliki relasi inspired_by ke global
+    # reference. Ini menjadi dasar analisis dampak cross-reference.
     rel_map = relation_map(dataset_path)
     if "inspired_by" not in rel_map:
         raise RuntimeError("relation 'inspired_by' not found in relation2id.txt")
@@ -79,6 +81,8 @@ def enriched_item_ids_from_path(dataset_path: str, n_items: int) -> Set[int]:
 
 
 def build_loader(args):
+    # Loader dipilih sesuai model. Dengan ini evaluator yang sama bisa dipakai
+    # untuk BPRMF, CKE, NFM, CFKG, KGAT, dan CR-HKGE pada split yang sama.
     path = args.data_path + args.dataset
     if args.model_type == "bprmf":
         return BPRMF_loader(args=args, path=path)
@@ -94,6 +98,9 @@ def build_loader(args):
 
 
 def build_config(args, data_generator):
+    # Konfigurasi model disusun sesuai kebutuhan tiap baseline.
+    # KGAT/CR-HKGE/CFKG butuh struktur KG lengkap, sedangkan BPRMF hanya butuh
+    # jumlah user/profile dan item.
     config = {
         "n_users": data_generator.n_users,
         "n_items": data_generator.n_items,
@@ -174,6 +181,10 @@ def metric_row(ranked_items: List[int], positives: List[int], ks: List[int]):
 
 
 def evaluate_subset(sess, model, data_generator, subset_items: Set[int] | None, ks: List[int]):
+    # Evaluasi Top-K:
+    # - subset_items=None berarti overall.
+    # - subset_items=enriched/standard berarti hanya item relevan pada subset
+    #   tersebut yang dihitung sebagai ground truth.
     result = {
         "recall": np.zeros(len(ks), dtype=np.float64),
         "precision": np.zeros(len(ks), dtype=np.float64),
@@ -199,6 +210,8 @@ def evaluate_subset(sess, model, data_generator, subset_items: Set[int] | None, 
 
     item_batch = range(data_generator.n_items)
     for user, target_positives in users:
+        # Semua item kandidat diberi skor, lalu item yang sudah ada di train
+        # dikeluarkan agar evaluasi fokus pada kemampuan ranking item test.
         feed_dict = data_generator.generate_test_feed_dict(
             model=model,
             user_batch=[user],
@@ -268,6 +281,9 @@ def main():
     else:
         enriched = enriched_item_ids(data_generator)
 
+    # Standard adalah komplemen dari enriched. Ini penting untuk menjelaskan
+    # apakah cross-reference membantu produk yang punya inspired_by tanpa
+    # merusak performa produk biasa.
     standard = set(range(data_generator.n_items)) - enriched
 
     print("subset definition: enriched=inspired_by products, standard=non-inspired_by products")

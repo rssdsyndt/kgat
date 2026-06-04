@@ -45,21 +45,33 @@ model_args() {
       echo "--model_type kgat"
       ;;
     cr_hkge_final)
+      # Model utama paper:
+      # semua komponen CR-HKGE aktif, yaitu relation-type attention,
+      # fragrance prior, relation-aware message, dan cross-reference.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_flow"
       ;;
     A_no_cross_reference)
+      # Ablation: menghapus Novelty cross-reference via inspired_by.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 0 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_best_metric ndcg --cr_best_k 3"
       ;;
     A_no_relation_attention)
+      # Ablation: menghapus relation-type attention, sehingga relasi fragrance
+      # tidak lagi mendapat bobot prioritas berbeda.
       echo "--model_type cr_hkge --cr_use_relation_weight 0 --cr_use_cross_ref 1 --cr_relation_aware_message 0 --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5 --cr_best_metric ndcg --cr_best_k 3"
       ;;
     A_no_relation_message)
+      # Ablation: relation attention tetap mempengaruhi skor attention,
+      # tetapi tidak mengalikan pesan adjacency per relasi.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5 --cr_best_metric ndcg --cr_best_k 3"
       ;;
     A_no_fragrance_prior)
+      # Ablation: bobot relasi tetap learnable, tetapi inisialisasinya netral
+      # tanpa prior domain fragrance.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode none --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.5 --cr_best_metric ndcg --cr_best_k 3"
       ;;
     A_no_novelty_modules)
+      # Ablation paling dasar: semua novelty CR-HKGE dimatikan.
+      # Ini mendekati KGAT dengan wrapper CR-HKGE dan dipakai sebagai kontrol.
       echo "--model_type cr_hkge --cr_use_relation_weight 0 --cr_use_cross_ref 0 --cr_relation_aware_message 0 --cr_best_metric ndcg --cr_best_k 3"
       ;;
     *)
@@ -78,6 +90,8 @@ run_target() {
   read -r -a extra_args <<< "$(model_args "$target")"
 
   echo "==> Training $target"
+  # Setiap target dilatih dari awal dengan split dan hyperparameter yang sama
+  # agar perbandingan baseline, CR-HKGE, dan ablation tetap fair.
   (
     cd "$MODEL_DIR"
     python Main.py \

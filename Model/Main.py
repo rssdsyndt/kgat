@@ -283,6 +283,11 @@ if __name__ == '__main__':
         Alternative Training for KGAT:
         ... phase 1: to train the recommender.
         """
+        # Fase I CR-HKGE/KGAT:
+        # training BPR untuk ranking rekomendasi. Pada penelitian ini, pasangan
+        # positif berasal dari content-based positive pairs, bukan purchase/rating
+        # historis. Fase ini melatih user/profile embedding dan item embedding
+        # agar positive item mendapat skor lebih tinggi daripada negative item.
         for idx in range(n_batch):
             btime= time()
 
@@ -310,7 +315,10 @@ if __name__ == '__main__':
             n_A_batch = len(data_generator.all_h_list) // args.batch_size_kg + 1
 
             if args.use_kge is True:
-                # using KGE method (knowledge graph embedding).
+                # Fase II-A:
+                # training TransR/KGE atas triples KG. Pada CR-HKGE, skor KGE
+                # juga dipengaruhi relation-type attention ketika fitur tersebut
+                # aktif, sehingga relasi fragrance punya prioritas berbeda.
                 for idx in range(n_A_batch):
                     btime = time()
 
@@ -324,7 +332,9 @@ if __name__ == '__main__':
                     reg_loss += batch_reg_loss
 
             if args.use_att is True:
-                # updating attentive laplacian matrix.
+                # Fase II-B:
+                # update attentive adjacency A_in. Matriks inilah yang dipakai
+                # pada message passing KGAT/CR-HKGE di epoch berikutnya.
                 model.update_attentive_A(sess)
 
         if np.isnan(loss) == True:
@@ -368,6 +378,8 @@ if __name__ == '__main__':
             print(perf_str)
 
         if args.model_type == 'cr_hkge':
+            # CR-HKGE disimpan berdasarkan metric yang dipilih, default NDCG@3,
+            # karena target utama paper adalah kualitas ranking Top-K.
             cur_cr_score = _metric_value(ret, cr_best_metric, cr_best_k, k_values)
             if cur_cr_score > cr_best_score:
                 cr_best_score = cur_cr_score
@@ -414,6 +426,8 @@ if __name__ == '__main__':
     hit = np.array(hit_loger)
 
     if args.model_type == 'cr_hkge':
+        # Untuk CR-HKGE, best iteration dilaporkan mengikuti metric pilihan
+        # cr_best_metric/cr_best_k, bukan selalu Recall@K pertama seperti KGAT.
         metric_key = _metric_key(cr_best_metric)
         metric_idx = _metric_index_for_k(k_values, cr_best_k)
         metric_log = {
@@ -446,6 +460,9 @@ if __name__ == '__main__':
     f.close()
 
     if hasattr(model, 'export_artifacts') and int(getattr(args, 'cr_export_embeddings', 0)) == 1:
+        # Export artifact hanya relevan untuk CR-HKGE karena model ini dipakai
+        # sebagai recommendation engine di sistem conversational setelah offline
+        # training selesai.
         if (args.model_type == 'cr_hkge' and args.save_flag == 1 and
                 int(getattr(args, 'cr_export_best_checkpoint', 1)) == 1):
             ckpt = tf.train.get_checkpoint_state(weights_save_path)
