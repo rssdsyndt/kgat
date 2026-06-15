@@ -68,6 +68,62 @@ bash scripts/run_cr_hkge_final_study.sh kgat cr_hkge_final_alpha_0_25 A_no_cross
 
 Untuk Colab, jalankan dari root repository `/content/kgat`.
 
+## Update Eksekusi: Tuning Fokus NFM
+
+Setelah CR-HKGE mengalahkan KGAT dan beberapa baseline KG/CF, baseline yang
+paling kuat adalah NFM. NFM kuat karena dataset evaluasi berbasis content
+positive pairs, sehingga interaksi fitur langsung sangat menguntungkan model
+tersebut.
+
+Tuning berikut tidak mengubah novelty CR-HKGE. Tujuannya hanya mengkalibrasi
+seberapa kuat cross-reference dan prior relasi bekerja supaya ranking Top-K
+lebih tajam ketika dibandingkan dengan NFM.
+
+Varian tuning yang tersedia:
+
+```text
+cr_hkge_final_alpha_0_075
+cr_hkge_final_alpha_0_05
+cr_hkge_final_alpha_0_1_prior_0_5
+cr_hkge_final_alpha_0_1_prior_0_25
+cr_hkge_final_alpha_0_1_no_relation_message
+cr_hkge_final_alpha_0_075_prior_0_5
+```
+
+Perintah Colab:
+
+```bash
+DATASET=dataset-aromatique-crhkge-ready \
+LOG_DIR=/content/kgat/final_study/logs_crhkge_ready \
+CR_HKGE_FINAL_EPOCHS=100 \
+bash scripts/run_cr_hkge_nfm_focus.sh
+```
+
+Output penting:
+
+```text
+/content/kgat/final_study/logs_crhkge_ready/final_summary.md
+/content/kgat/final_study/logs_crhkge_ready/nfm_focus_summary.md
+```
+
+Cara membaca hasil:
+
+```text
+1. Jika NDCG@3 naik, varian tersebut lebih kuat untuk ranking awal.
+2. Jika Recall@10 naik, varian tersebut lebih kuat untuk coverage/retrieval.
+3. Jika standard subset naik, model lebih baik untuk generalisasi produk tanpa inspired_by.
+4. Jika enriched subset turun terlalu jauh, cross-reference terlalu dilemahkan.
+```
+
+Kandidat final dipilih dari keseimbangan:
+
+```text
+overall NDCG@3
+overall Recall@10
+enriched Recall@3/NDCG@3
+standard Recall@3/NDCG@3
+```
+
 ## 1. Posisi Penelitian
 
 Penelitian ini mengembangkan CR-HKGE, yaitu modifikasi KGAT untuk rekomendasi parfum pada kondisi tidak tersedia historical user interaction seperti purchase, rating, atau click log.

@@ -62,6 +62,40 @@ model_args() {
       # neighborhood KG utama.
       echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.1 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_1"
       ;;
+    cr_hkge_final_alpha_0_075)
+      # NFM-focus tuning: cross-reference lebih kecil dari alpha 0.1.
+      # Tujuannya menaikkan ketajaman ranking awal tanpa mematikan novelty
+      # inspired_by sepenuhnya.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.075 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_075"
+      ;;
+    cr_hkge_final_alpha_0_05)
+      # NFM-focus tuning: cross-reference dibuat sangat konservatif.
+      # Ini menguji apakah NDCG@3 membaik ketika sinyal local fragrance/KG
+      # kembali lebih dominan dibanding inspired_by.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.05 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_05"
+      ;;
+    cr_hkge_final_alpha_0_1_prior_0_5)
+      # NFM-focus tuning: alpha tetap 0.1, tetapi prior relasi fragrance
+      # dilemahkan agar relation attention tidak terlalu agresif.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 0.5 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.1 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_1_prior_0_5"
+      ;;
+    cr_hkge_final_alpha_0_1_prior_0_25)
+      # NFM-focus tuning: versi prior fragrance paling konservatif.
+      # Dipakai untuk mengecek apakah ranking awal lebih tajam saat prior
+      # relasi hanya menjadi bias ringan, bukan pendorong utama.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 0.25 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.1 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_1_prior_0_25"
+      ;;
+    cr_hkge_final_alpha_0_1_no_relation_message)
+      # NFM-focus tuning: relation attention tetap aktif pada skor KGE/attention,
+      # tetapi tidak mengalikan pesan adjacency. Ini mengurangi risiko relation
+      # prior mengganggu message passing yang sudah stabil.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 1.0 --cr_relation_attention_scale type_count --cr_relation_aware_message 0 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.1 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_1_no_relation_message"
+      ;;
+    cr_hkge_final_alpha_0_075_prior_0_5)
+      # Kombinasi dua kalibrasi yang paling mungkin membantu NDCG: alpha 0.075
+      # dan prior fragrance 0.5.
+      echo "--model_type cr_hkge --cr_use_relation_weight 1 --cr_use_cross_ref 1 --cr_relation_weight_mode semantic --cr_relation_prior_mode fragrance --cr_relation_prior_strength 0.5 --cr_relation_attention_scale type_count --cr_relation_aware_message 1 --cr_relation_message_scale type_count --cr_cross_ref_bi_interaction 0 --cr_cross_ref_gate 0 --cr_cross_ref_alpha 0.075 --cr_best_metric ndcg --cr_best_k 3 --cr_export_embeddings 1 --cr_model_version cr_hkge_final_alpha_0_075_prior_0_5"
+      ;;
     cr_hkge_final_gated)
       # Kandidat final: semua novelty tetap aktif, tetapi kontribusi
       # cross-reference dikontrol oleh gate trainable. Init -2.0 berarti
