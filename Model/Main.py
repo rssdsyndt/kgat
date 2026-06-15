@@ -420,6 +420,20 @@ if __name__ == '__main__':
                         ret['ndcg'][0], ret['ndcg'][-1])
             print(perf_str)
 
+        # Smoke test sering memakai epoch kecil (< show_step=10). Dalam kondisi
+        # itu training belum masuk evaluasi periodik, sehingga checkpoint belum
+        # pernah disimpan walaupun Final Eval berhasil. Simpan checkpoint fallback
+        # agar script evaluasi terpisah tetap bisa memuat bobot model.
+        if args.save_flag == 1:
+            final_epoch = max(0, args.epoch - 1)
+            save_saver.save(sess, weights_save_path + '/weights', global_step=final_epoch)
+            if args.model_type == 'cr_hkge':
+                cr_best_score = _metric_value(ret, cr_best_metric, cr_best_k, k_values)
+                cr_best_epoch = final_epoch
+                print('save CR-HKGE final-eval checkpoint in path: ', weights_save_path)
+            else:
+                print('save final-eval weights in path: ', weights_save_path)
+
     recs = np.array(rec_loger)
     pres = np.array(pre_loger)
     ndcgs = np.array(ndcg_loger)
