@@ -1,0 +1,341 @@
+new_product_id	old_entity_id	product_name
+0	0	Berrylicious
+1	21	Verve Vale
+2	34	Secret of Bandit
+3	44	Spicy Day
+4	51	Fancy Dress
+5	58	Moz Art
+6	67	Superclass Woman
+7	78	Black Lax
+8	85	Red Glass
+9	92	Classic Vintage
+10	98	Aquazone
+11	107	Solstice
+12	115	Our First Love
+13	118	Pentavenue
+14	126	Black Ball
+15	129	Patchouli Petals
+16	133	Bosi Bottle
+17	137	Fuck Boy
+18	142	Colate Sport
+19	147	Vandora
+20	152	Cloud Grande
+21	155	Whisper of Passion
+22	160	SCENT SQUAD
+23	169	SAFETY FIRST
+24	172	Reef 33 Perfumes
+25	174	CHARMING DECIVER
+26	177	Golden Secret
+27	181	Oran Cle
+28	186	Authentic Discovery
+29	190	Turathi Blue Afnan
+30	191	Spring Breeze
+31	194	Bright Cloud
+32	199	Barbie
+33	203	Jack Sparrow
+34	206	Will You
+35	211	Will Deep
+36	215	Maxima Gold
+37	218	deep water
+38	223	Rainforest
+39	225	Blue Crocodile
+40	229	Treasure to Love
+41	232	Dreamland
+42	236	Spell Out
+43	239	Stardust
+44	241	Kenzoba
+45	245	Autumn
+46	247	The Scent Diva
+47	250	Bad Boy
+48	253	Vicaro
+49	258	Dusk musk
+50	262	aqua fresh woman
+51	265	Harry Up
+52	268	Last Season
+53	274	Glamorious
+54	277	Cover Girl
+55	279	Lavish Lily
+56	284	Lovin Him
+57	287	Shout Man
+58	289	Blatherskite
+59	291	My Crush
+60	294	Five Years
+61	297	D Nova
+62	302	How Deep
+63	305	Sombrero
+64	307	Woman In Love Never Cross
+65	309	Breezy Bouquet
+66	311	Bosa Nova
+67	314	Victory
+68	316	White Sense
+69	319	Woman In Red
+70	322	FOF
+71	324	Darkness
+72	329	Bamboo Cici
+73	332	Rouge Velaurs
+74	334	Add 5
+75	336	Tacenda
+76	337	Rayon
+77	339	Dark Ages
+78	341	Foreo Ice
+79	344	Silk Blossom
+80	350	Dory
+81	352	King of Parties
+82	355	Black Bond
+83	356	cinnabar
+84	361	Deep Crush
+85	363	Zero Two
+86	365	Erost
+87	366	Momento
+88	367	Usain Bolt
+89	369	Big Boss
+90	371	Vagabond
+91	373	Only You
+92	374	Jeep Shine
+93	377	Spice Up
+94	379	Advens
+95	381	Mellifluous
+96	385	Just A Boy
+97	386	Great Police
+98	389	Calestial Citrus
+99	392	Tow Combination
+100	394	Vintage Vision
+101	396	Blue Hills
+102	398	Forfive
+103	400	Far From Home
+104	403	Princess Charming
+105	405	Haruke
+106	407	D sava
+107	412	Ocean Lounge
+108	416	Queen Star
+109	418	Perfect Girl
+110	419	Axapollo
+111	420	Hey Ma
+112	421	Zimba
+113	423	Moon AA
+114	425	Blanc Space
+115	426	Black Floral
+116	428	Temperature
+117	429	Bewitching
+118	431	Plat Low
+119	433	Aegen Si
+120	435	Be Feminim
+121	438	Popular
+122	440	Jellyfish
+123	441	Alinenor
+124	442	My Angel
+125	443	Chosen
+126	445	Yamato One
+127	447	eramusk
+128	450	Ood Super
+129	451	Dor Favor
+130	452	Eifel
+131	454	Champion Man
+132	457	Silky Pink
+133	460	Fit Woman
+134	463	Twilight
+135	465	Strong Girl
+136	467	Tunefull
+137	469	XO Nine
+138	470	Gotcha
+139	472	Arouse
+140	474	Eternal Sunset
+141	477	In The Groove
+142	479	Omniscient
+143	483	Ford Leather
+144	484	Boomtown
+145	489	London Love
+146	490	Be Del Woman
+147	494	Road Spice
+148	499	Artemis
+149	504	Dark Green
+150	506	Forest
+151	509	Mighty
+152	513	Fresh Matcha
+153	515	Gracias Garden
+154	517	Haystack
+155	520	Man in Green
+156	526	Passion Art
+157	528	Floral Noir
+158	532	lost in space
+159	535	Black Ford
+160	537	Sweaty Man
+161	540	Secret Code
+162	543	Majesty
+163	545	Fast and Furious
+164	547	Fiori Leys
+165	550	silk safron
+166	551	Longlive
+167	555	Milord
+168	556	Classy Bless
+169	559	Felice
+170	561	CR 7
+171	563	Blue Black
+172	565	Liquid
+173	566	Aqua Legend
+174	567	Badge
+175	569	MIB
+176	570	Jeep White
+177	571	Head Turner
+178	573	Heritage
+179	576	Ombredesire
+180	579	Oudhi
+181	581	Oud Man
+182	582	Sandal an Oud
+183	583	Monarca
+184	587	Forest Night
+185	589	Beatrize
+186	590	Oud Noir
+187	592	Musk Oud
+188	595	Vetiver Intense
+189	596	Blue Shine
+190	598	Malika
+191	600	Bidden Rose
+192	602	Qardashi
+193	604	Groovy Glam
+194	609	Devine
+195	611	Pixie Petals
+196	613	Rosella
+197	616	Ebbio
+198	622	Scent Vintage
+199	625	White Luxury
+200	628	Bright Sunshine
+201	631	Truly
+202	634	Ruby Red
+203	637	Full Of Passion
+204	639	Charmile
+205	643	Marveiles
+206	646	Green Steam
+207	648	Valesca
+208	652	Rose of The Vent
+209	654	Seven San
+210	658	Celindion Sensation
+211	660	Gempita
+212	664	Waka-Waka
+213	668	Mirage Moon
+214	671	Candy Night
+215	673	Glitter Glam
+216	675	given sea
+217	679	Callisto
+218	682	Goo Squid
+219	685	Cartir
+220	689	Guci Gold
+221	693	Sis Leys
+222	694	Ice Americano
+223	697	Axcoffe
+224	704	Black Cocain
+225	708	Collector's Edition
+226	712	Rose of The Sea
+227	714	Sweet Sunshine
+228	717	Queen Flowers
+229	719	Born to Shine
+230	723	Calypso
+231	727	Particless
+232	730	Samericek
+233	733	Black Mirage
+234	735	Dalal
+235	740	Soxy
+236	743	She Walf
+237	746	Cassanova
+238	751	Milazombie
+239	756	Yiper
+240	761	Heather Sweet
+241	764	Luminous Lotus
+242	768	Sweet Saphier
+243	769	Jongleuse
+244	772	Clue Story
+245	774	Days Girl
+246	778	Nozomi
+247	780	Spookie
+248	782	Still With You
+249	784	Green Eternity
+250	786	Unicorn Lady
+251	789	Twicy
+252	791	High Lily
+253	794	Endless Love
+254	796	Just A Girl
+255	798	Flower Mag
+256	800	Glowing Face
+257	802	Baorela
+258	804	moonlit meadow
+259	807	Fire Up
+260	808	Gravy Glam
+261	810	Opiate
+262	811	Limited
+263	813	Lovin You
+264	815	In Love 1
+265	817	Durant
+266	820	Scarlett Heels
+267	822	The Master
+268	825	Hughes
+269	828	Blooming
+270	832	Insider
+271	834	White Light
+272	835	Mystery Girl
+273	836	Sweet Vanilla
+274	839	Choc Choco
+275	846	CR Seven
+276	849	Mady Girl
+277	851	Delight Blue
+278	853	Ice Cream
+279	857	Sauve Kiss
+280	859	Ana Sweet
+281	862	Nowadays Man
+282	865	Accadiantaly
+283	869	Red Sunset
+284	871	Sauvage Classy
+285	873	Tokyo 2020
+286	875	One Sixty
+287	882	Expose
+288	884	Superclass Man
+289	887	-
+290	890	Sexy Killer
+291	892	Dwelling
+292	894	Elvishore
+293	896	Chance
+294	897	Tribes
+295	899	Mannequin
+296	900	Pina Coach
+297	902	You So Lovely
+298	904	Spices Fragrance
+299	907	Glamour Glam
+300	909	Jeep Black
+301	911	Moonlight Muse
+302	912	Exits
+303	916	Savile Row
+304	918	Exotic Escape
+305	919	Na Or Ya
+306	921	Senyasen
+307	923	Floresta
+308	925	Solitary Man
+309	927	Fornine
+310	929	Pine Fir
+311	930	Rafi Ahmad Touch Rafatar
+312	932	Arabic Spice
+313	933	English M
+314	935	Sweet Home
+315	937	Black Square
+316	940	Run Away
+317	944	Iron Man
+318	946	Excelsior
+319	949	Be Mine
+320	952	Shine Review
+321	954	Black Snow
+322	956	Moment of Truth
+323	958	Timber
+324	960	Groove Large
+325	962	Conoir
+326	965	Dorsava
+327	967	Lugsary
+328	970	Festive Love
+329	973	Pyramid
+330	976	Guardino
+331	978	Haleef
+332	980	Esava-X
+333	983	Golden Dust
+334	986	Camaraderia
+335	987	tobacco
+336	989	Vanilla Woody
+337	990	Satnight
+338	993	M Too Man
+339	996	Dhuga Light

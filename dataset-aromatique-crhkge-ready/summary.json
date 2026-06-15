@@ -1,0 +1,46 @@
+{
+  "source_dataset": "dataset-aromatique-kgat-ready",
+  "output_dataset": "dataset-aromatique-crhkge-ready",
+  "construction": "cr_hkge_aligned_content_positive_pairs",
+  "profile_semantics": "one content/query profile per source product",
+  "n_products": 340,
+  "n_profiles": 340,
+  "train_per_profile": 8,
+  "test_per_profile": 4,
+  "n_train_interactions": 2720,
+  "n_test_interactions": 1360,
+  "n_unique_train_items": 329,
+  "n_unique_test_items": 301,
+  "n_enriched_products": 243,
+  "n_standard_products": 97,
+  "relation_counts": {
+    "belongs_to_family": 340,
+    "belongs_to_global_family": 231,
+    "has_accord": 1629,
+    "has_global_accord": 2017,
+    "has_visual_note": 680,
+    "inspired_by": 243,
+    "sem_similar": 4110
+  },
+  "scoring_weights": {
+    "local_accord": 2.0,
+    "visual_note": 1.25,
+    "local_family": 1.5,
+    "global_accord": 2.0,
+    "global_family": 1.25,
+    "cross_ref_global_to_local_accord": 1.75,
+    "cross_ref_global_to_local_family": 0.8,
+    "same_global_reference": 3.0,
+    "sem_similar": 0.35,
+    "enriched_cross_ref_bonus": 0.2
+  },
+  "score_min": 1.6585858585858586,
+  "score_max": 11.433333333333334,
+  "score_mean": 3.9293851518885736,
+  "files": {
+    "train": "train.txt",
+    "test": "test.txt",
+    "pair_scores": "positive_pair_scores.tsv",
+    "profile_mapping": "profile2product.tsv"
+  }
+}

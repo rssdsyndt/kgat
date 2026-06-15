@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL_DIR="$ROOT_DIR/Model"
-LOG_DIR="$ROOT_DIR/final_study/logs"
-DATASET="dataset-aromatique-kgat-ready"
+LOG_DIR="${LOG_DIR:-$ROOT_DIR/final_study/logs}"
+DATASET="${DATASET:-dataset-aromatique-kgat-ready}"
 
 mkdir -p "$LOG_DIR"
 
